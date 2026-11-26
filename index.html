@@ -116,8 +116,10 @@ button:focus-visible,.field:focus-visible{outline:3px solid var(--hot);outline-o
 .dots i.now{background:var(--hot);transform:scale(1.3)}
 .dots i.gap{width:6px;border:0;background:none}
 .quit.armed{background:var(--hot);color:var(--ink)}
-@media (max-width:380px){
+@media (max-width:430px){
   .top .rname{display:none}
+}
+@media (max-width:380px){
   .dots{gap:4px}
   .dots i{width:9px;height:9px}
 }
@@ -165,6 +167,20 @@ button:focus-visible,.field:focus-visible{outline:3px solid var(--hot);outline-o
 .chips{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
 .chip{background:var(--card);color:var(--text);border:2.5px solid var(--line);border-radius:999px;padding:6px 12px;font-weight:800;font-size:.88rem;box-shadow:3px 3px 0 var(--drop)}
 .chip.done{background:var(--hot);color:var(--ink);border-color:var(--ink)}
+/* 이유 고르기: 말로 지어내는 대신 고르게 해서 말의 첫 단추를 만든다 */
+.reasons{display:grid;gap:8px}
+.reasons h3{margin:0}
+.say{margin:0;font-size:.88rem;color:var(--muted);word-break:keep-all}
+.panel .say{margin:4px 0 8px}
+.rchips{display:flex;flex-wrap:wrap;gap:6px}
+.rchip{border:2px solid var(--line);background:var(--field);color:var(--text);border-radius:999px;padding:6px 12px;font-weight:700;font-size:.88rem;word-break:keep-all}
+.rchip.on{background:var(--hot);color:var(--ink);border-color:var(--ink)}
+.rchips.static .rchip{font-size:.8rem;padding:4px 10px}
+.panel .skip{color:var(--muted);justify-self:start;padding-left:0}
+.saybox{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.said{background:var(--field);border:2px solid var(--line);border-radius:14px;padding:8px 10px;display:grid;gap:2px;word-break:keep-all;min-width:0}
+.said b{font-size:.78rem;color:var(--muted)}
+.said span{font-weight:800}
 
 /* ── 카운트다운 · 알림 ── */
 .count{position:fixed;inset:0;z-index:6;display:grid;place-items:center;background:rgba(15,10,20,.55)}
@@ -225,7 +241,8 @@ button:focus-visible,.field:focus-visible{outline:3px solid var(--hot);outline-o
    라운드(기승전결) 순서대로 3묶음. 한 판마다 라운드별로 2~3개를 랜덤으로 뽑는다.
    s = 상황 설명(없으면 기본 문구), a / b = 최악 두 개, t = 공개 뒤 이어 갈 이야기 */
 const STAGES = [
-  { no:'1라운드', name:'몸풀기', tag:'아직은 웃으면서 고를 수 있어요', go:'가자!', qs:[
+  { no:'1라운드', name:'몸풀기', tag:'아직은 웃으면서 고를 수 있어요', go:'가자!',
+    reasons:['상상만 해도 으악 😖', '매일이면 못 버텨', '그나마 웃어넘길 수 있어', '창피한 게 제일 싫어', '이건 고칠 수 있잖아', '그냥 느낌이 그래 🤷'], qs:[
     { a:'양말 한쪽이 늘 축축함', b:'신발 속에 늘 작은 돌 하나', t:'일상에서 제일 사소하게 짜증 나는 순간은?' },
     { a:'모든 음료가 미지근함', b:'모든 음식이 살짝 덜 짬', t:'이것만은 양보 못 하는 음식 취향 하나씩' },
     { a:'데이트하는 날마다 비', b:'데이트하는 날마다 배터리 5%', t:'데이트 망할 뻔했던 날 기억나?' },
@@ -240,15 +257,18 @@ const STAGES = [
     { a:'평생 이어폰 한쪽만 들림', b:'평생 휴대폰 화면에 금 감', t:'없으면 하루도 못 버티는 물건은?' },
     { a:'카톡 보낼 때마다 오타 하나', b:'카톡 보낼 때마다 이모티콘 랜덤 발송', t:'서로 카톡 말투에서 제일 귀여운 점은?' },
     { a:'라면에 늘 스프 반만', b:'짜장면에 늘 단무지 없음', t:'최애 야식 조합 공개하기' },
+    { a:'데이트 동선을 매번 PPT로 발표하는 애인', b:'데이트를 매번 「지금 나올래?」로 잡는 애인', t:'둘이 만날 때 어디까지 미리 정해 두는 게 좋아?' },
+    { s:'같이 영화를 보는데', a:'새 인물마다 범인이라고 추리하는 애인', b:'대사 한 줄마다 감상평을 붙이는 애인', t:'집에서 같이 볼 때라면 어느 쪽까지는 오히려 재밌어?' },
   ]},
-  { no:'2라운드', name:'점점 곤란', tag:'슬슬 고르기 싫어지는 구간', go:'덤벼!', qs:[
+  { no:'2라운드', name:'점점 곤란', tag:'슬슬 고르기 싫어지는 구간', go:'덤벼!',
+    reasons:['서운할 것 같아', '자존심 상해', '질투 날 것 같아', '창피해서 숨고 싶어', '대화로 풀 수 있어', '그냥 느낌이 그래 🤷'], qs:[
     { a:'애인이 매일 밤 코를 드르렁', b:'애인이 매일 밤 이를 뿌드득', t:'서로 자는 모습이나 습관에서 처음 알게 된 거 있어?' },
-    { s:'내 애인이 내 친구한테 해 준다면', a:'깻잎 떼어 주기', b:'새우 껍질 까 주기', t:'우리만의 선, 어디까지 괜찮아?' },
-    { s:'내 애인이 내 친구한테 해 준다면', a:'패딩 지퍼 올려 주기', b:'입가에 묻은 거 닦아 주기', t:'이건 왜 더 별로야? 기준이 뭐야?' },
+    { s:'내 애인이 내 친구한테 해 준다면', a:'깻잎 떼어 주기', b:'새우 껍질 까 주기', t:'우리만의 선, 어디까지 괜찮아?', f:'friend-care' },
+    { s:'내 애인이 내 친구한테 해 준다면', a:'패딩 지퍼 올려 주기', b:'입가에 묻은 거 닦아 주기', t:'이건 왜 더 별로야? 기준이 뭐야?', f:'friend-care' },
     { a:'데이트 사진 전부 눈 감음', b:'데이트 사진 전부 흔들림', t:'우리 사진 중에 제일 좋아하는 한 장은?' },
-    { a:'애인 부모님 앞에서 방귀', b:'애인 친구들 앞에서 대자로 꽈당', t:'제일 창피했던 순간, 이제는 말할 수 있다' },
+    { a:'애인 부모님 앞에서 방귀', b:'애인 친구들 앞에서 대자로 꽈당', t:'제일 창피했던 순간, 이제는 말할 수 있다', f:'parents' },
     { a:'내가 준 선물을 애인이 중고로 팖', b:'내가 준 선물을 애인이 남한테 선물함', t:'받은 선물 중에 제일 기억에 남는 건?' },
-    { a:'카톡 1이 3시간째 안 사라짐', b:'읽고 3시간째 답이 없음', t:'연락 때문에 서운했던 적 있어? 어떻게 해 주면 좋아?' },
+    { a:'카톡 1이 3시간째 안 사라짐', b:'읽고 3시간째 답이 없음', t:'연락 때문에 서운했던 적 있어? 어떻게 해 주면 좋아?', f:'contact' },
     { a:'애인이 내 생일을 까먹음', b:'애인이 우리 기념일을 까먹음', t:'꼭 기억해 줬으면 하는 날은?' },
     { a:'내 흑역사 사진이 애인 프사', b:'내 잠꼬대 녹음이 애인 친구들 단톡방에', t:'서로 흑역사 하나씩 공개하기' },
     { a:'첫 데이트에 지갑 두고 옴', b:'첫 데이트 내내 이에 고춧가루', t:'우리 첫 데이트, 서로 기억나는 장면은?' },
@@ -256,25 +276,48 @@ const STAGES = [
     { a:'애인 휴대폰에 내 이름이 「그분」', b:'애인 휴대폰에 내 이름이 본명 석 자', t:'서로 휴대폰에 뭐라고 저장했는지 공개!' },
     { a:'맛집 와서 애인이 다이어트 선언', b:'맛집 와서 애인이 사진만 30분', t:'같이 꼭 가 보고 싶은 맛집 있어?' },
     { a:'애인 방이 너무 더러움', b:'애인이 결벽증 수준으로 깔끔', t:'같이 산다면 집안일 뭐 맡을래?' },
+    { a:'늘 2시간 늦으면서 내가 늦으면 화내는 애인', b:'늘 2시간 먼저 와서 1분만 늦어도 화내는 애인', t:'늦는 것, 미리 말 안 하는 것, 화내는 것 중에 뭐가 제일 별로야?' },
+    { s:'애인 부모님과 단둘이', a:'필라테스 수업 같이 듣기', b:'목욕탕 같이 가기', t:'부모님이랑 처음 시간을 보낸다면 뭘 할 때 제일 편할 것 같아?', f:'parents' },
+    { s:'사귀고 보니 알게 된 사실', a:'내 전 애인의 친구였음', b:'내 친구의 전 애인이었음', t:'처음부터 알았어도 같은 선택을 했을 것 같아?', f:'ex' },
+    { a:'인스타에서 전 애인 이름을 검색한 애인', b:'인스타에서 몸매 사진을 100명 넘게 찾아본 애인', t:'검색한 이유를 들으면 마음이 달라질 것 같아?', f:'ex' },
   ]},
-  { no:'3라운드', name:'최종 결전', tag:'진짜 고민되는 것만 남았어요', go:'마지막이다!', qs:[
-    { a:'애인의 큰 거짓말 하나', b:'애인의 작은 거짓말 백 개', t:'우리 사이에 절대 안 되는 것 하나만 정한다면?' },
+  { no:'3라운드', name:'최종 결전', tag:'정답은 없어요. 솔직하게만 말해 줘요', go:'가 보자!',
+    reasons:['믿음이 흔들려', '마음이 오래 아플 것 같아', '숨기는 게 더 싫어', '노력하면 될 것 같아', '나라면 못 버틸 것 같아', '그냥 느낌이 그래 🤷'], qs:[
+    { a:'애인의 큰 거짓말 하나', b:'애인의 작은 거짓말 백 개', t:'우리 사이에 절대 안 되는 것 하나만 정한다면?', f:'honesty' },
     { a:'안 싸우지만 무덤덤한 연애', b:'자주 싸우지만 뜨거운 연애', t:'우리가 다퉜다가 잘 풀렸던 때, 뭐가 좋았어?' },
     { a:'3년 장거리 연애', b:'매일 보지만 대화 없는 연애', t:'떨어져 있을 때 제일 보고 싶은 순간은?' },
     { a:'내 기억에서 우리 1년이 사라짐', b:'애인 기억에서 우리 1년이 사라짐', t:'절대 잊고 싶지 않은 우리 기억 하나' },
     { a:'애인 속마음이 나한테 다 들림', b:'내 속마음이 애인한테 다 들림', t:'지금 이 순간 속마음 하나만 말해 주기' },
     { a:'애인이 내 친구들이랑 앙숙', b:'애인이 우리 가족이랑 앙숙', t:'서로 소중한 사람들과 어떻게 지내면 좋겠어?' },
     { a:'애인이 꿈 때문에 해외로 5년', b:'애인 꿈 따라 내가 해외로 5년', t:'요즘 꿈꾸는 것 중에 아직 말 안 한 거 있어?' },
-    { a:'돈 걱정 많은 행복한 연애', b:'돈 걱정 없는 심심한 연애', t:'5년 뒤 우리의 평범한 하루는 어떤 모습이면 좋겠어?' },
+    { a:'돈 걱정 많은 행복한 연애', b:'돈 걱정 없는 심심한 연애', t:'5년 뒤 우리의 평범한 하루는 어떤 모습이면 좋겠어?', f:'money' },
     { a:'내가 훨씬 더 좋아하는 연애', b:'애인이 훨씬 더 좋아하는 연애', t:'상대가 나를 좋아한다고 확 느꼈던 순간은?' },
     { a:'서운한 걸 절대 말 안 하는 애인', b:'서운한 걸 하나하나 다 말하는 애인', t:'서운할 때 어떻게 말해 주면 제일 잘 들려?' },
     { a:'힘든 일을 혼자 끙끙 앓는 애인', b:'힘든 일을 매일 나한테만 쏟는 애인', t:'내가 힘들 때 어떻게 해 주면 제일 좋아?' },
-    { a:'애인 휴대폰 비밀번호를 영영 모름', b:'애인이 내 휴대폰을 매일 확인', t:'둘 사이에 공유하고 싶은 것, 지키고 싶은 것은?' },
+    { a:'애인 휴대폰 비밀번호를 영영 모름', b:'애인이 내 휴대폰을 매일 확인', t:'둘 사이에 공유하고 싶은 것, 지키고 싶은 것은?', f:'watch' },
     { s:'다시 태어난다면', a:'서로 모르는 사람으로', b:'서로 남매로', t:'다시 태어나도 나 만날 거야? 이유는?' },
     { a:'평생 같은 동네에서만 데이트', b:'평생 1년에 한 번만 데이트', t:'우리 다음 데이트, 지금 정해 볼까?' },
+    { a:'내가 말 안 한 과거까지 계속 캐묻는 애인', b:'내가 옛날 얘기를 꺼내도 궁금해하지 않는 애인', t:'상대가 먼저 물어봐 줬으면 하는 얘기와, 내가 먼저 꺼내고 싶은 얘기는?', f:'past' },
+    { a:'10억 빚이 있는 완벽한 이상형', b:'10억이 있지만 취향은 정반대인 사람', t:'금액이 1억이면 선택이 바뀌어? 어느 숫자에서 바뀔까?', f:'money' },
+    { a:'내 애인이 내 친구를 혼자 좋아함', b:'내 친구가 내 애인을 혼자 좋아함', t:'누구한테, 어떤 얘기를 먼저 듣고 싶을 것 같아?' },
+    { a:'바람피운 걸 먼저 털어놓고 용서를 비는 애인', b:'바람피운 걸 내가 알 때까지 숨기는 애인', t:'먼저 털어놓는 게 그다음 마음에 얼마나 영향을 줄까?', f:'honesty' },
+    { a:'이혼을 세 번 했다고 처음부터 밝힌 애인', b:'아이가 있다는 걸 숨겼다가 들킨 애인', t:'과거 그 자체와 숨겼다는 사실 중에 뭐가 더 크게 다가와?', f:'past' },
+    { a:'일주일 연락이 끊겨도 내 근황에 관심 없는 애인', b:'1분만 답이 없어도 위치를 확인하는 애인', t:'걱정해서 묻는 것과 간섭하는 것의 경계는 어디쯤이야?', f:'contact' },
+  ]},
+  { no:'마무리', name:'최고 vs 최고', tag:'마지막은 다정하게. 이번엔 뭐가 더 좋은지 골라요', go:'좋아!', ask:'뭐가 더 좋아?', sweet:true, count:1,
+    reasons:['이게 더 오래 남아', '매일 느끼고 싶어', '특별해서 좋아', '말보다 마음이 보여', '그냥 이게 좋아 🥰'], qs:[
+    { s:'하나만 받을 수 있다면', a:'매일 한 번 「사랑해」 듣기', b:'매달 한 번 나를 생각해서 고른 선물 받기', t:'어떤 말이나 선물이 제일 오래 마음에 남아 있어?' },
+    { s:'힘든 날', a:'말없이 꼭 안아 주기', b:'내 얘기를 끝까지 들어 주기', t:'요즘 힘들었던 날 하나만 말해 줄래? 그때 뭐가 필요했어?' },
+    { s:'기념일에', a:'정성 가득한 손편지', b:'둘만 아는 곳으로 짧은 여행', t:'우리 다음 기념일에 하고 싶은 거 하나씩' },
+    { s:'하루 중에', a:'아침에 「잘 잤어?」 연락', b:'밤에 「오늘 고생했어」 통화', t:'하루 중에 상대 생각이 제일 많이 나는 순간은?' },
   ]},
 ];
 const DEFAULT_STEM = '둘 중 하나는 무조건 겪어야 한다면';
+const askOf = si => STAGES[si].ask || '뭐가 더 최악?';
+/* 고른 이유 코드: 숫자 = 그 라운드 reasons 의 번호, '-' = 말로 할게요 */
+const reasonAt = (w, i) => { const c = isStr(w) ? w[i] : ''; return /^[0-9-]$/.test(c || '') ? c : ''; };
+const reasonLabel = (si, c) => /^[0-9]$/.test(c) && STAGES[si].reasons[+c] ? STAGES[si].reasons[+c] : '';
+const WHY_SWEET = ['왜 그게 더 좋아? 한 사람씩 이유 하나!', '상대가 고른 쪽의 좋은 점 하나 말해 주기'];
 const WHY = [
   '왜 그게 더 최악이야? 한 사람씩 이유 하나!',
   '상대가 고른 쪽을 30초 동안 편들어 주기',
@@ -330,12 +373,21 @@ function toast(msg){
    라운드마다 2~3개. 한 번 나온 질문은 그 라운드 질문을 다 돌 때까지 다시 안 나온다(이 기기 기준). */
 function drawIds(){
   const used = new Set(store.get(K_USED, []));
+  const fams = new Set();   // 비슷한 질문 묶음(f)은 한 판에 하나만
   const out = STAGES.map((st, si) => {
-    const k = 2 + Math.floor(Math.random() * 2);
+    const k = st.count || (2 + Math.floor(Math.random() * 2));
     const ids = st.qs.map((_, i) => si + '-' + i);
-    let fresh = shuffle(ids.filter(id => !used.has(id)));
-    if (fresh.length < k) { ids.forEach(id => used.delete(id)); fresh = shuffle(ids.slice()); }
-    const picked = fresh.slice(0, k);
+    let fresh = ids.filter(id => !used.has(id));
+    if (fresh.length < k) { ids.forEach(id => used.delete(id)); fresh = ids.slice(); }
+    const stale = ids.filter(id => !fresh.includes(id));
+    const picked = [];
+    for (const id of shuffle(fresh).concat(shuffle(stale))) {
+      const f = st.qs[+id.split('-')[1]].f;
+      if (f && fams.has(f)) continue;
+      if (f) fams.add(f);
+      picked.push(id);
+      if (picked.length === k) break;
+    }
     picked.forEach(id => used.add(id));
     return picked;
   });
@@ -383,7 +435,7 @@ function duelHtml(q, pickable, animate){
     + '<span class="tag">' + v.toUpperCase() + '</span><span>' + esc(q[v]) + '</span><span class="whos" id="whos-' + v + '"></span></' + el + '>';
   return '<div class="mid"><span class="stem">' + esc(q.s || DEFAULT_STEM) + '</span>'
     + '<div class="duel' + (animate && !reduce ? ' enter' : '') + '" id="duel">'
-    + card('a') + '<div class="vs" aria-hidden="true">VS</div><div class="sparks" id="sparks" aria-hidden="true"></div>' + card('b')
+    + card('a') + '<div class="vs" aria-hidden="true">' + (STAGES[q.si] && STAGES[q.si].sweet ? '♥' : 'VS') + '</div><div class="sparks" id="sparks" aria-hidden="true"></div>' + card('b')
     + '</div></div>';
 }
 
@@ -419,15 +471,16 @@ function endHtml(rows, actionsHtml, who){
   const n = rows.length, same = rows.filter(r => r.same).length, split = rows.filter(r => !r.same);
   const p = n ? same / n : 0;
   const verdict = !n ? '아직 고른 게 없어요'
-    : p >= .8 ? '최악 취향까지 닮은 사이 🫶'
-    : p >= .5 ? '통하는데 싸울 거리도 있는 사이 🤝'
-    : p >= .25 ? '갈린 만큼 할 얘기가 많은 사이 ⚡'
-    : '정반대라 매번 새로운 사이 🎢';
+    : p >= .8 ? '마음이 척척 통하는 사이 🫶'
+    : p >= .5 ? '닮은 듯 달라서 재밌는 사이 🤝'
+    : p >= .25 ? '서로 알아 갈 게 많은 사이 🌱'
+    : '다르게 봐서 대화가 끝이 없는 사이 🎢';
   const side = c => c === 'a' ? 'A' : 'B';
+  const whoLine = (name, c, why) => '<span class="t">' + esc(name) + ' ' + side(c) + (why ? ' · ' + esc(why) : '') + '</span>';
   const splitPanel = split.length
-    ? '<div class="panel"><h3>⚡ 오늘 밤 더 얘기해 볼 것</h3><ul class="splits">'
+    ? '<div class="panel"><h3>🌙 서로 다르게 본 것</h3><ul class="splits">'
       + split.map(r => '<li><span class="ra">' + esc(r.q.a) + '</span><em>vs</em><span class="rb">' + esc(r.q.b) + '</span>'
-        + (who ? '<span class="t">' + esc(who.me) + ' ' + side(r.mine) + ' · ' + esc(who.pt) + ' ' + side(r.theirs) + '</span>' : '')
+        + (who ? whoLine(who.me, r.mine, r.wm) + whoLine(who.pt, r.theirs, r.wt) : '')
         + '<span class="t">💬 ' + esc(r.q.t) + '</span></li>').join('')
       + '</ul></div>'
     : n ? '<div class="panel"><h3>🫶 전부 통했어요</h3><p class="q">그럼 둘이 같이 더 최악인 조합을 하나 만들어 보기!</p></div>' : '';
@@ -512,7 +565,7 @@ function renderLocalStep(){
   }
   local.phase = 'duel';
   $app.innerHTML = topbarHtml(local.rounds, local.k, '그만') + duelHtml(loc.q, false, true)
-    + '<div class="lower' + (reduce ? '' : ' delay') + '" id="lower"><p class="ask">뭐가 더 최악?</p>'
+    + '<div class="lower' + (reduce ? '' : ' delay') + '" id="lower"><p class="ask">' + askOf(loc.si) + '</p>'
     + '<button class="btn" data-act="lcount">하나, 둘, 셋!</button>'
     + '<button class="skip on-color" data-act="lskip">이건 패스</button></div>';
   scrollTop();
@@ -520,11 +573,13 @@ function renderLocalStep(){
 }
 function showLocalTalk(){
   local.phase = 'talk';
-  const q = locate(local.rounds, local.k).q;
+  const loc = locate(local.rounds, local.k), q = loc.q, st = STAGES[loc.si];
   const lower = document.getElementById('lower');
   if (!lower) return;
   lower.className = 'lower';
-  lower.innerHTML = '<div class="panel pop-in" role="status"><h3>💬 ' + esc(pickOne(WHY)) + '</h3><p class="q">' + esc(q.t) + '</p></div>'
+  lower.innerHTML = '<div class="panel pop-in" role="status"><h3>💬 ' + esc(pickOne(st.sweet ? WHY_SWEET : WHY)) + '</h3><p class="q">' + esc(q.t) + '</p>'
+    + '<p class="say">말이 막히면 이 중에 하나 골라서 시작해 봐요</p>'
+    + '<div class="rchips static">' + st.reasons.map(r => '<span class="rchip">' + esc(r) + '</span>').join('') + '</div></div>'
     + '<p class="hint on-color">이야기 끝났으면 기록하고 다음으로</p>'
     + '<div class="row"><button class="btn ok" data-act="lrec" data-v="1">통했다 🤝</button><button class="btn no" data-act="lrec" data-v="0">갈렸다 ⚡</button></div>';
   lower.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'end' });
@@ -542,11 +597,11 @@ function renderLocalEnd(){
    - 방장이 판(d, ids)을 정하고, 손님은 그 판을 따라간다.
    - 지금 문제 = 둘의 at 중 큰 값. 한 명이 「다음」을 누르면 같이 넘어간다.
    - 둘 다 고르면 양쪽 화면에서 각자 3·2·1 뒤 공개한다. */
-const net = { room: null, code: '', me: null, view: '', introDone: '', dealKey: '', rounds: null, ptCache: null, unsubs: [], discT: 0, offline: false };
+const net = { room: null, code: '', me: null, view: '', introDone: '', dealKey: '', rounds: null, ptCache: null, sel: null, unsubs: [], discT: 0, offline: false };
 
 function netReset(){
   net.unsubs.forEach(u => { try { u(); } catch (e) {} });
-  net.unsubs = []; net.view = ''; net.introDone = ''; net.dealKey = ''; net.rounds = null; net.ptCache = null;
+  net.unsubs = []; net.view = ''; net.introDone = ''; net.dealKey = ''; net.rounds = null; net.ptCache = null; net.sel = null;
   clearTimeout(net.discT); net.offline = false;
 }
 /* PeerJS 연결(로그인 없이 쓰는 길): 방장은 'wbg26-코드' 이름으로 PeerJS 공용 서버에 등록하고, 손님은 그 이름으로 접속한다.
@@ -746,7 +801,7 @@ function sync(){
   const P = pt ? pt.presence : null;
   // 손님은 방장이 돌린 판을 그대로 따라간다
   if (me.r === 'guest' && P && isStr(P.d) && P.d && P.d !== me.d) {
-    me.d = P.d; me.ids = isStr(P.ids) ? P.ids : ''; me.at = 0; me.p = ''; pushMe();
+    me.d = P.d; me.ids = isStr(P.ids) ? P.ids : ''; me.at = 0; me.p = ''; me.w = ''; pushMe();
   }
   if (P && me.d && P.d === me.d) net.ptCache = P;
   updateNetbar(pt);
@@ -811,23 +866,41 @@ function renderWaiting(pt){
 }
 
 function renderNetDuel(rounds, cur, loc){
+  const st = STAGES[loc.si];
   $app.innerHTML = topbarHtml(rounds, cur, '나가기') + duelHtml(loc.q, true, true)
-    + '<div class="lower' + (reduce ? '' : ' delay') + '" id="lower"><p class="ask">뭐가 더 최악?</p>'
-    + '<p class="hint on-color">카드를 눌러 몰래 고르세요 🤫 둘 다 고르면 동시에 공개돼요</p>'
-    + '<div class="chips"><span class="chip" id="st-me">나</span><span class="chip" id="st-pt">상대</span></div></div>';
+    + '<div class="lower' + (reduce ? '' : ' delay') + '" id="lower"><p class="ask">' + askOf(loc.si) + '</p>'
+    + '<p class="hint on-color" id="pick-hint">카드를 눌러 몰래 고르세요 🤫 둘 다 고르면 동시에 공개돼요</p>'
+    + '<div class="panel reasons" id="reasons" hidden><h3>' + (st.sweet ? '왜 그게 더 좋아?' : '왜 그게 더 최악이야?') + '</h3>'
+    + '<p class="say">하나 골라 두면 공개할 때 같이 보여요. 딱 맞는 게 없으면 제일 가까운 걸로!</p>'
+    + '<div class="rchips">' + st.reasons.map((r, i) => '<button type="button" class="rchip" data-act="reason" data-v="' + i + '">' + esc(r) + '</button>').join('') + '</div>'
+    + '<button type="button" class="skip" data-act="reason" data-v="-">이유는 말로 할게요</button></div>'
+    + '<div class="chips"><span class="chip" id="st-me">나</span><span class="chip" id="st-pt">상대</span></div>'
+    + '<button class="skip on-color" data-act="netskip">이 질문은 넘기기</button></div>';
   document.getElementById('duel').dataset.tag = net.dealKey + ':' + cur;
   scrollTop();
   if (!reduce) later(impact, 440);
 }
 function updateDuelStatus(mine, theirs, pt, Pe){
+  const cur = num(net.me.at), tag = net.dealKey + ':' + cur;
+  // 카드만 누르고 이유를 아직 안 고른 상태(sel)는 화면에만 표시하고, 이유를 고르는 순간 제출된다
+  const card = mine || (net.sel && net.sel.tag === tag ? net.sel.card : '');
   ['a', 'b'].forEach(v => {
     const c = document.getElementById('card-' + v);
     if (!c) return;
-    c.classList.toggle('mine', mine === v);
-    c.setAttribute('aria-pressed', String(mine === v));
+    c.classList.toggle('mine', card === v);
+    c.setAttribute('aria-pressed', String(card === v));
   });
+  const box = document.getElementById('reasons');
+  if (box) {
+    box.hidden = !card;
+    const w = reasonAt(net.me.w, cur);
+    box.querySelectorAll('[data-act=reason]').forEach(b => b.classList.toggle('on', !!mine && b.dataset.v === w));
+  }
+  const hint = document.getElementById('pick-hint');
+  if (hint) hint.textContent = !card ? '카드를 눌러 몰래 고르세요 🤫 둘 다 고르면 동시에 공개돼요'
+    : !mine ? '이유를 하나 고르면 제출돼요' : '제출했어요. 공개 전까지는 바꿀 수 있어요';
   const sm = document.getElementById('st-me'), sp = document.getElementById('st-pt');
-  if (sm) { sm.textContent = mine ? '나 · 골랐어요 ✓' : '나 · 고르는 중'; sm.classList.toggle('done', !!mine); }
+  if (sm) { sm.textContent = mine ? '나 · 골랐어요 ✓' : card ? '나 · 이유 고르는 중' : '나 · 고르는 중'; sm.classList.toggle('done', !!mine); }
   if (sp) {
     const nm = pt ? nameOf(pt.presence) : (Pe ? nameOf(Pe) : '상대');
     sp.textContent = nm + (theirs ? ' · 골랐어요 ✓' : pt ? ' · 고르는 중' : ' · 연결 기다리는 중');
@@ -854,12 +927,23 @@ function renderReveal(rounds, cur, loc, mine, theirs, Pe){
     card.setAttribute('aria-disabled', 'true');
     document.getElementById('whos-' + v).innerHTML = who.join('');
   });
+  const st = STAGES[loc.si];
   const same = mine === theirs;
   const last = cur + 1 >= total(rounds);
+  const why = c => reasonLabel(loc.si, c) || '말로 할게요';
+  // 말 순서는 문제마다 번갈아: 짝수 번째는 방장, 홀수 번째는 손님부터
+  const meFirst = (cur % 2 === 0) === (net.me.r === 'host');
+  const verdict = st.sweet ? (same ? '통했다! 💞' : '취향 발견! 🎁') : (same ? '통했다! 🎯' : '갈렸다! ⚡');
+  const subline = st.sweet ? (same ? '둘 다 같은 걸 바랐네요' : '서로 뭘 더 좋아하는지 하나 알게 됐어요')
+    : (same ? '같은 걸 골라도 이유는 다를 수 있어요' : '다르게 본 게 제일 좋은 대화 거리예요');
   const lower = document.getElementById('lower');
   lower.className = 'lower';
-  lower.innerHTML = '<p class="ask pop-in">' + (same ? '통했다! 🎯' : '갈렸다! ⚡') + '</p>'
-    + '<div class="panel pop-in" role="status"><h3>💬 ' + esc(WHY[hashStr(tag) % WHY.length]) + '</h3><p class="q">' + esc(loc.q.t) + '</p></div>'
+  lower.innerHTML = '<p class="ask pop-in">' + verdict + '</p><p class="hint on-color pop-in">' + subline + '</p>'
+    + '<div class="panel pop-in" role="status">'
+    + '<div class="saybox"><div class="said"><b>나</b><span>' + esc(why(reasonAt(net.me.w, cur))) + '</span></div>'
+    + '<div class="said"><b>' + esc(nm) + '</b><span>' + esc(why(Pe ? reasonAt(Pe.w, cur) : '')) + '</span></div></div>'
+    + '<p class="say">🎤 이번엔 <b>' + esc(meFirst ? '나' : nm) + '</b>부터! 「○○라서 더 ' + (st.sweet ? '좋아' : '최악이야') + '」로 시작하면 쉬워요</p>'
+    + '<h3>💬 ' + esc(loc.q.t) + '</h3></div>'
     + '<button class="btn" data-act="netnext">' + (last ? '결과 보기' : '다음 질문 →') + '</button>'
     + '<p class="hint on-color">둘 중 한 명이 누르면 같이 넘어가요</p>';
   lower.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'end' });
@@ -868,7 +952,10 @@ function renderNetEnd(rounds, Pe){
   const N = total(rounds), rows = [];
   for (let i = 0; i < N; i++) {
     const a = pickAt(net.me.p, i), b = Pe ? pickAt(Pe.p, i) : '';
-    if (a && b) rows.push({ q: locate(rounds, i).q, same: a === b, mine: a, theirs: b });
+    if (!a || !b) continue;
+    const q = locate(rounds, i).q;
+    rows.push({ q, same: a === b, mine: a, theirs: b,
+      wm: reasonLabel(q.si, reasonAt(net.me.w, i)), wt: Pe ? reasonLabel(q.si, reasonAt(Pe.w, i)) : '' });
   }
   const actions = net.me.r === 'host'
     ? '<div class="row"><button class="btn" data-act="begin">한 판 더</button><button class="btn plain" data-act="leave">나가기</button></div>'
@@ -881,7 +968,7 @@ function beginDeal(){
   if (screen !== 'online' || !net.me || net.me.r !== 'host') return;
   net.me.d = makeCode() + makeCode().slice(0, 2);
   net.me.ids = encodeIds(drawIds());
-  net.me.at = 0; net.me.p = '';
+  net.me.at = 0; net.me.p = ''; net.me.w = '';
   pushMe(); sync();
 }
 function copyCode(){
@@ -902,7 +989,7 @@ function tryJoin(){
   const el = document.getElementById('code');
   const code = normCode(el ? el.value : '');
   if (code.length !== 5) { setNote('초대코드 5자리를 넣어 주세요.'); if (el) el.focus(); return; }
-  enterRoom(code, { r: 'guest', n: nickValue('손님'), d: '', ids: '', at: 0, p: '' });
+  enterRoom(code, { r: 'guest', n: nickValue('손님'), d: '', ids: '', at: 0, p: '', w: '' });
 }
 function resume(){
   const s = store.get(K_SESSION, null);
@@ -939,7 +1026,7 @@ $app.addEventListener('click', e => {
       }
       if (screen === 'local') renderLocalEnd(); else leaveRoom();
       break;
-    case 'host': enterRoom(makeCode(), { r: 'host', n: nickValue('방장'), d: '', ids: '', at: 0, p: '' }); break;
+    case 'host': enterRoom(makeCode(), { r: 'host', n: nickValue('방장'), d: '', ids: '', at: 0, p: '', w: '' }); break;
     case 'join': tryJoin(); break;
     case 'resume': resume(); break;
     case 'copy': copyCode(); break;
@@ -948,10 +1035,30 @@ $app.addEventListener('click', e => {
     case 'leave': leaveRoom(); break;
     case 'pick': {
       if (screen !== 'online' || !net.view.startsWith('duel:') || (v !== 'a' && v !== 'b')) return;
-      net.me.p = setPick(net.me.p, num(net.me.at), total(net.rounds), v);
+      const cur = num(net.me.at);
+      // 이미 냈으면 고른 카드만 바꾸고, 아직이면 카드를 잡아 둔 채 이유 고르기를 연다
+      if (pickAt(net.me.p, cur)) { net.me.p = setPick(net.me.p, cur, total(net.rounds), v); pushMe(); sync(); break; }
+      net.sel = { tag: net.dealKey + ':' + cur, card: v };
+      sync();
+      const box = document.getElementById('reasons');
+      if (box) box.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'nearest' });
+      break;
+    }
+    case 'reason': {
+      if (screen !== 'online' || !net.view.startsWith('duel:') || !/^[0-9-]$/.test(v || '')) return;
+      const cur = num(net.me.at), N = total(net.rounds);
+      const card = pickAt(net.me.p, cur) || (net.sel && net.sel.tag === net.dealKey + ':' + cur ? net.sel.card : '');
+      if (!card) return;
+      net.me.p = setPick(net.me.p, cur, N, card);
+      net.me.w = setPick(net.me.w, cur, N, v);
       pushMe(); sync();
       break;
     }
+    case 'netskip':
+      if (screen !== 'online' || !net.view.startsWith('duel:')) return;
+      net.me.at = num(net.me.at) + 1;
+      pushMe(); sync();
+      break;
     case 'netnext':
       if (screen !== 'online' || !net.view.startsWith('reveal:')) return;
       net.me.at = num(net.me.at) + 1;
