@@ -1,0 +1,990 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>최악 밸런스 게임</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="최악과 최악이 부딪히면, 뭐가 더 최악인지 같이 고르고 이야기하는 커플 밸런스 게임">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&display=swap" rel="stylesheet">
+<style>
+/* 레이아웃: 붉은 A 진영과 푸른 B 진영이 사선으로 맞선 무대 위에서, 두 카드가 가운데로 부딪힌다 */
+:root{
+  --ca:#ff4d5e; --ca2:#ff9248;
+  --cb:#3d5afe; --cb2:#4fc3ff;
+  --card:#fffdf8; --field:#fff4e8; --text:#1a1420; --muted:#5d5566;
+  --line:#1a1420; --drop:#1a1420;
+  --hot:#ffe14d; --ink:#1a1420; --paper:#ffffff;
+  --la:#d62839; --lb:#2346e8;
+  --base:#3d5afe;
+  --display:"Black Han Sans","Apple SD Gothic Neo","Noto Sans KR",sans-serif;
+  --font:"Pretendard","Apple SD Gothic Neo","Noto Sans KR","Malgun Gothic",system-ui,sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --ca:#a8213a; --ca2:#b3471a; --cb:#2233a6; --cb2:#145f96;
+    --card:#221d28; --field:#2c2533; --text:#f4eef6; --muted:#b9afc1; --line:#f4eef6; --drop:#000;
+    --la:#ff8a96; --lb:#8fb4ff;
+    --base:#2233a6;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --ca:#a8213a; --ca2:#b3471a; --cb:#2233a6; --cb2:#145f96;
+  --card:#221d28; --field:#2c2533; --text:#f4eef6; --muted:#b9afc1; --line:#f4eef6; --drop:#000;
+  --la:#ff8a96; --lb:#8fb4ff;
+  --base:#2233a6;
+  color-scheme:dark;
+}
+
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--base);color:var(--text);font-family:var(--font);line-height:1.5;-webkit-tap-highlight-color:transparent;overflow-x:hidden}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible,.field:focus-visible{outline:3px solid var(--hot);outline-offset:3px}
+
+/* ── 흐르는 패턴 배경: 위(A)는 붉은 쪽, 아래(B)는 푸른 쪽, 서로 반대 방향으로 흐른다 ── */
+.bg{position:fixed;inset:0;z-index:0;overflow:hidden}
+.half{position:absolute;inset:0;background-size:120px 120px,100% 100%}
+.half.a{background-image:var(--tile),linear-gradient(160deg,var(--ca),var(--ca2));clip-path:polygon(0 0,100% 0,100% 38%,0 54%);animation:flowA 6s linear infinite}
+.half.b{background-image:var(--tile),linear-gradient(160deg,var(--cb2),var(--cb));clip-path:polygon(0 54%,100% 38%,100% 100%,0 100%);animation:flowB 6s linear infinite}
+.slash{position:absolute;inset:0;background:var(--paper);clip-path:polygon(0 53%,100% 37%,100% 39%,0 55%);opacity:.92}
+@keyframes flowA{from{background-position:0 0,0 0}to{background-position:120px 120px,0 0}}
+@keyframes flowB{from{background-position:0 0,0 0}to{background-position:-120px -120px,0 0}}
+
+.stage{position:relative;z-index:1;max-width:560px;margin:0 auto;min-height:100%;padding-block:14px calc(24px + env(safe-area-inset-bottom,0px));padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:14px}
+
+/* ── 공통 조각 ── */
+.pill{display:inline-block;background:var(--card);color:var(--text);border:2.5px solid var(--line);border-radius:999px;padding:5px 12px;font-weight:800;font-size:.85rem;box-shadow:3px 3px 0 var(--drop);white-space:nowrap}
+.panel{background:var(--card);color:var(--text);border:3px solid var(--line);border-radius:22px;box-shadow:6px 6px 0 var(--drop);padding:16px 18px}
+.panel h3{margin:0 0 6px;font-family:var(--display);font-weight:400;font-size:1.15rem;line-height:1.35}
+.panel .q{margin:0;font-weight:800;font-size:1.12rem;word-break:keep-all}
+.btn{border:3px solid var(--ink);border-radius:18px;padding:15px 18px;font-family:var(--display);font-weight:400;font-size:1.3rem;background:var(--hot);color:var(--ink);box-shadow:5px 5px 0 var(--ink);transition:transform .08s,box-shadow .08s}
+.btn:active{transform:translate(4px,4px);box-shadow:1px 1px 0 var(--ink)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn:disabled:active{transform:none;box-shadow:5px 5px 0 var(--ink)}
+.btn.ok{background:#8ef0bf}
+.btn.no{background:#ffb27a}
+.btn.plain{background:var(--paper)}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.on-color{color:#fff;font-weight:700;text-shadow:0 1px 0 var(--ink),0 2px 6px rgba(0,0,0,.45)}
+.skip{align-self:center;background:none;border:0;padding:6px 12px;font-size:.92rem;text-decoration:underline;text-underline-offset:3px}
+.hint{margin:0;text-align:center;font-size:.9rem;word-break:keep-all}
+.pop-in{animation:rise .35s both}
+
+/* ── 시작 · 대기실 · 라운드 소개 · 결말 ── */
+.intro{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:16px;padding:12px 0}
+.title{margin:0;font-family:var(--display);font-weight:900;font-synthesis:none;font-size:clamp(3.4rem,17vw,5.6rem);line-height:1.02;color:var(--hot);-webkit-text-stroke:3px var(--ink);text-shadow:6px 6px 0 var(--ink);animation:slam .6s cubic-bezier(.2,1.4,.4,1) both;text-wrap:balance}
+.title.sm{font-size:clamp(2.6rem,12vw,4rem)}
+.round-no{font-family:var(--display);font-weight:900;font-synthesis:none;font-size:clamp(3.6rem,18vw,6rem);line-height:1;color:var(--hot);-webkit-text-stroke:3px var(--ink);text-shadow:6px 6px 0 var(--ink);animation:slam .55s cubic-bezier(.2,1.4,.4,1) both}
+.round-name{font-family:var(--display);font-weight:900;font-synthesis:none;font-size:1.6rem;background:var(--ink);color:#fff;padding:6px 18px;border-radius:999px;animation:rise .4s .25s both}
+.sub{margin:0;font-size:1.02rem;word-break:keep-all;animation:rise .4s .4s both}
+.sub.small{font-size:.86rem;max-width:440px}
+.intro > .btn{min-width:220px;animation:rise .4s .55s both}
+.rules{text-align:left;max-width:440px;width:100%}
+.rules ol{margin:0;padding-left:1.2em;display:grid;gap:6px;font-size:.95rem;word-break:keep-all}
+@keyframes slam{0%{transform:scale(2.6) rotate(-8deg);opacity:0}100%{transform:none;opacity:1}}
+@keyframes rise{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+
+.lobby{display:grid;gap:10px;width:100%;max-width:440px;text-align:left}
+.lbl{font-weight:800;font-size:.9rem}
+.field{width:100%;min-width:0;font:inherit;font-weight:800;font-size:1.05rem;padding:12px 14px;border:3px solid var(--line);border-radius:14px;background:var(--field);color:var(--text)}
+.field::placeholder{color:var(--muted);font-weight:600;letter-spacing:0}
+.field.code{text-transform:uppercase;letter-spacing:.3em;text-align:center;font-family:var(--display);font-weight:900;font-synthesis:none}
+.joinrow{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px}
+.joinrow .btn{padding:10px 16px;font-size:1.1rem}
+.or{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:.82rem;font-weight:700}
+.or::before,.or::after{content:"";flex:1;border-top:2px dashed var(--muted);opacity:.5}
+.note{margin:0;font-size:.85rem;color:var(--muted);word-break:keep-all}
+
+.codebox{display:grid;gap:2px;justify-items:center;background:var(--card);color:var(--text);border:3px solid var(--line);border-radius:22px;box-shadow:6px 6px 0 var(--drop);padding:14px 28px}
+.codebox small{color:var(--muted);font-weight:700}
+.codebox b{font-family:var(--display);font-weight:900;font-synthesis:none;font-size:clamp(2.6rem,13vw,3.6rem);line-height:1.1;letter-spacing:.18em;padding-left:.18em}
+.status-panel{width:100%;max-width:440px;font-weight:700;word-break:keep-all}
+.intro.calm > *{animation:none}
+.wait-dots{animation:pulse 1.4s ease-in-out infinite}
+.wait-dots::after{content:" …"}
+@keyframes pulse{50%{opacity:.4}}
+
+/* ── 상단 진행 표시 ── */
+.top{display:flex;align-items:center;gap:10px}
+.dots{display:flex;gap:4px;align-items:center;flex:1;justify-content:center;flex-wrap:wrap}
+.dots i{width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,.4);border:2px solid var(--ink)}
+.dots i.done{background:#fff}
+.dots i.now{background:var(--hot);transform:scale(1.3)}
+.dots i.gap{width:6px;border:0;background:none}
+.quit.armed{background:var(--hot);color:var(--ink)}
+@media (max-width:380px){
+  .top .rname{display:none}
+  .dots{gap:4px}
+  .dots i{width:9px;height:9px}
+}
+
+/* ── 충돌 무대 ── */
+.mid{flex:1;display:flex;flex-direction:column;justify-content:center;gap:14px}
+.stem{align-self:center;background:var(--ink);color:#fff;border-radius:999px;padding:6px 16px;font-size:.92rem;font-weight:700;text-align:center;word-break:keep-all}
+.duel{position:relative;display:flex;flex-direction:column;gap:24px;margin:6px 0}
+.card{position:relative;width:100%;background:var(--card);color:var(--text);border:3px solid var(--line);border-radius:22px;box-shadow:6px 6px 0 var(--drop);padding:28px 20px 24px;min-height:128px;display:flex;align-items:center;justify-content:center;text-align:center;font-weight:800;font-size:clamp(1.15rem,4.8vw,1.45rem);line-height:1.4;word-break:keep-all;overflow-wrap:anywhere;transition:opacity .25s}
+.card.pickable{cursor:pointer}
+.card.pickable:active{filter:brightness(.94)}
+.card[aria-disabled="true"]{cursor:default}
+.card.mine{outline:5px solid var(--hot);outline-offset:3px}
+.card.mine::after{content:"내 선택";position:absolute;top:-15px;right:14px;background:var(--hot);color:var(--ink);border:2.5px solid var(--ink);border-radius:999px;padding:1px 10px;font-size:.8rem;font-weight:900}
+.card.dim{opacity:.5}
+.tag{position:absolute;top:-17px;left:16px;width:36px;height:36px;border-radius:50%;display:grid;place-items:center;font-family:var(--display);font-weight:900;font-synthesis:none;font-size:1.05rem;color:#fff;border:3px solid var(--ink)}
+.card.a .tag{background:var(--ca)}
+.card.b .tag{background:var(--cb)}
+.whos{position:absolute;right:12px;bottom:-15px;display:flex;gap:6px}
+.who{background:var(--ink);color:#fff;border:2.5px solid #fff;border-radius:999px;padding:1px 10px;font-size:.82rem;font-weight:800;animation:slam .4s cubic-bezier(.2,1.4,.4,1) both}
+.who.me{background:var(--hot);color:var(--ink);border-color:var(--ink)}
+.vs{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:2;width:66px;height:66px;border-radius:50%;background:var(--ink);color:var(--hot);border:4px solid #fff;display:grid;place-items:center;font-family:var(--display);font-weight:900;font-synthesis:none;font-size:1.45rem;box-shadow:0 0 0 4px var(--ink)}
+.sparks{position:absolute;left:50%;top:50%;width:0;height:0;z-index:3;pointer-events:none}
+.sparks i{position:absolute;left:0;top:-3px;width:20px;height:6px;border-radius:3px;background:var(--hot);border:1.5px solid var(--ink);transform-origin:0 50%;animation:spark .6s ease-out forwards}
+.sparks i:nth-child(2n){background:#fff}
+@keyframes spark{0%{transform:rotate(var(--r)) translateX(12px) scaleX(1);opacity:1}100%{transform:rotate(var(--r)) translateX(var(--d)) scaleX(.3);opacity:0}}
+
+.duel.enter .card.a{animation:inA .62s cubic-bezier(.25,.9,.35,1) both}
+.duel.enter .card.b{animation:inB .62s cubic-bezier(.25,.9,.35,1) both}
+.duel.enter .vs{animation:vsPop .5s .42s cubic-bezier(.3,1.6,.5,1) both}
+@keyframes inA{0%{transform:translateY(-110vh) rotate(-14deg)}72%{transform:translateY(16px) rotate(3deg)}86%{transform:translateY(-6px) rotate(-1deg)}100%{transform:none}}
+@keyframes inB{0%{transform:translateY(110vh) rotate(14deg)}72%{transform:translateY(-16px) rotate(-3deg)}86%{transform:translateY(6px) rotate(1deg)}100%{transform:none}}
+@keyframes inAx{0%{transform:translateX(-110vw) rotate(-12deg)}72%{transform:translateX(18px) rotate(2deg)}86%{transform:translateX(-6px)}100%{transform:none}}
+@keyframes inBx{0%{transform:translateX(110vw) rotate(12deg)}72%{transform:translateX(-18px) rotate(-2deg)}86%{transform:translateX(6px)}100%{transform:none}}
+@keyframes vsPop{0%{transform:translate(-50%,-50%) scale(0) rotate(-120deg)}100%{transform:translate(-50%,-50%) scale(1) rotate(0)}}
+.shake{animation:shake .42s}
+@keyframes shake{0%,100%{transform:none}20%{transform:translate(-9px,5px)}40%{transform:translate(8px,-6px)}60%{transform:translate(-5px,3px)}80%{transform:translate(3px,-2px)}}
+.flash{position:fixed;inset:0;background:#fff;pointer-events:none;z-index:5;opacity:0}
+.flash.go{animation:flash .35s ease-out}
+@keyframes flash{0%{opacity:.85}100%{opacity:0}}
+
+.lower{display:flex;flex-direction:column;gap:12px}
+.lower.delay{animation:rise .4s .75s both}
+.ask{margin:0;text-align:center;font-family:var(--display);font-weight:900;font-synthesis:none;font-size:clamp(2.1rem,10vw,2.9rem);line-height:1.1;color:#fff;-webkit-text-stroke:2px var(--ink);text-shadow:4px 4px 0 var(--ink)}
+.chips{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+.chip{background:var(--card);color:var(--text);border:2.5px solid var(--line);border-radius:999px;padding:6px 12px;font-weight:800;font-size:.88rem;box-shadow:3px 3px 0 var(--drop)}
+.chip.done{background:var(--hot);color:var(--ink);border-color:var(--ink)}
+
+/* ── 카운트다운 · 알림 ── */
+.count{position:fixed;inset:0;z-index:6;display:grid;place-items:center;background:rgba(15,10,20,.55)}
+.count b{font-family:var(--display);font-weight:900;font-synthesis:none;font-size:clamp(7rem,42vw,12rem);line-height:1;color:var(--hot);-webkit-text-stroke:4px var(--ink);text-shadow:8px 8px 0 var(--ink);animation:slam .45s cubic-bezier(.2,1.4,.4,1) both}
+.count b.go{font-size:clamp(3.4rem,17vw,6rem)}
+.netbar{position:fixed;left:50%;top:calc(62px + env(safe-area-inset-top,0px));transform:translateX(-50%);z-index:4;width:max-content;max-width:calc(100% - 32px);background:var(--ink);color:#fff;border:2px solid #fff;border-radius:999px;padding:6px 14px;font-size:.84rem;font-weight:700;text-align:center;word-break:keep-all}
+.toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:7;width:max-content;max-width:calc(100% - 32px);background:var(--ink);color:#fff;border:2px solid #fff;border-radius:999px;padding:10px 16px;font-weight:700;font-size:.9rem;text-align:center;opacity:0;pointer-events:none;transition:opacity .2s}
+.toast.show{opacity:1}
+
+/* ── 결말 ── */
+.score{display:grid;grid-template-columns:1fr 1fr;gap:12px;width:100%;max-width:440px}
+.score b{display:block;font-family:var(--display);font-weight:900;font-synthesis:none;font-size:2.6rem;line-height:1.1;font-variant-numeric:tabular-nums}
+.score small{color:var(--muted);font-weight:700}
+.verdict{margin:0;font-family:var(--display);font-weight:900;font-synthesis:none;font-size:1.5rem;color:#fff;-webkit-text-stroke:1px var(--ink);text-shadow:3px 3px 0 var(--ink);word-break:keep-all}
+.end .panel{width:100%;max-width:440px;text-align:left}
+.end .score .panel{text-align:center;padding:12px}
+.end .row{width:100%;max-width:440px}
+.intro .row .btn{min-width:0}
+.splits{list-style:none;margin:6px 0 0;padding:0;display:grid;gap:10px}
+.splits li{display:grid;gap:2px;padding-bottom:10px;border-bottom:2px dashed var(--muted);word-break:keep-all}
+.splits li:last-child{border-bottom:0;padding-bottom:0}
+.splits .ra::before{content:"A ";color:var(--la);font-weight:900}
+.splits .rb::before{content:"B ";color:var(--lb);font-weight:900}
+.splits em{font-style:normal;font-size:.8rem;color:var(--muted)}
+.splits .t{font-size:.88rem;color:var(--muted)}
+
+/* ── 가로 화면: 왼쪽(A)·오른쪽(B)에서 부딪힌다 ── */
+@media (min-width:760px) and (min-aspect-ratio:1/1){
+  .half.a{clip-path:polygon(0 0,58% 0,42% 100%,0 100%)}
+  .half.b{clip-path:polygon(58% 0,100% 0,100% 100%,42% 100%)}
+  .slash{clip-path:polygon(57% 0,59% 0,43% 100%,41% 100%)}
+  .stage{max-width:1000px}
+  .duel{flex-direction:row;align-items:stretch;gap:64px;margin:20px 0 8px}
+  .card{flex:1;min-height:240px;font-size:1.6rem}
+  .duel.enter .card.a{animation-name:inAx}
+  .duel.enter .card.b{animation-name:inBx}
+  .lower{width:100%;max-width:560px;align-self:center}
+}
+@media (prefers-reduced-motion: reduce){
+  .half.a,.half.b{animation:none}
+  *,*::before,*::after{animation-duration:.01ms!important;animation-delay:0s!important;transition:none!important}
+}
+</style>
+</head>
+<body>
+<div class="bg" aria-hidden="true"><div class="half a"></div><div class="half b"></div><div class="slash"></div></div>
+<div class="flash" id="flash" aria-hidden="true"></div>
+<div class="netbar" id="netbar" role="status" hidden></div>
+<div class="toast" id="toast" role="status"></div>
+<main class="stage" id="app"></main>
+<noscript><p style="position:relative;z-index:1;color:#fff;text-align:center">자바스크립트를 켜야 게임이 돌아가요.</p></noscript>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.4/peerjs.min.js" integrity="sha512-iFU+yF1keEaLDC9HEwPfLMSRaS0unBHE14GEgx6pQKJXjp5v0tvX8xpfp2lgJ62XEjbYp/M5C3CAmej/PWXMyA==" crossorigin="anonymous"></script>
+<script>
+(() => {
+'use strict';
+/* ───────────────────────── 질문 데이터 ─────────────────────────
+   라운드(기승전결) 순서대로 3묶음. 한 판마다 라운드별로 2~3개를 랜덤으로 뽑는다.
+   s = 상황 설명(없으면 기본 문구), a / b = 최악 두 개, t = 공개 뒤 이어 갈 이야기 */
+const STAGES = [
+  { no:'1라운드', name:'몸풀기', tag:'아직은 웃으면서 고를 수 있어요', go:'가자!', qs:[
+    { a:'양말 한쪽이 늘 축축함', b:'신발 속에 늘 작은 돌 하나', t:'일상에서 제일 사소하게 짜증 나는 순간은?' },
+    { a:'모든 음료가 미지근함', b:'모든 음식이 살짝 덜 짬', t:'이것만은 양보 못 하는 음식 취향 하나씩' },
+    { a:'데이트하는 날마다 비', b:'데이트하는 날마다 배터리 5%', t:'데이트 망할 뻔했던 날 기억나?' },
+    { a:'모든 음식에 고수', b:'모든 음식에 오이', t:'서로 절대 못 먹는 음식 목록 교환하기' },
+    { a:'알람이 매일 3분씩 늦게 울림', b:'알람이 매일 30분 일찍 울림', t:'이상적인 기상 시간은? 아침형이야, 저녁형이야?' },
+    { a:'엘리베이터 없는 5층 집', b:'출근길마다 꽉 찬 엘리베이터', t:'언젠가 살아 보고 싶은 집이나 동네는?' },
+    { a:'영화관 앞사람 머리가 늘 큼', b:'영화관 옆사람이 늘 팝콘 쩝쩝', t:'같이 보고 싶은 영화 하나씩 찍기' },
+    { a:'좋아하는 노래 후렴만 평생 못 들음', b:'싫어하는 노래가 하루 종일 맴돔', t:'요즘 머리에 맴도는 노래는?' },
+    { a:'택배가 늘 하루 늦게 옴', b:'택배가 늘 옆집으로 감', t:'최근에 산 것 중에 제일 만족한 건?' },
+    { a:'샤워하는데 갑자기 찬물', b:'머리 감는데 샴푸가 딱 떨어짐', t:'나만의 소소한 행복 루틴 있어?' },
+    { a:'한여름에 에어컨 고장', b:'한겨울에 보일러 고장', t:'제일 더웠던 날, 제일 추웠던 날의 기억은?' },
+    { a:'평생 이어폰 한쪽만 들림', b:'평생 휴대폰 화면에 금 감', t:'없으면 하루도 못 버티는 물건은?' },
+    { a:'카톡 보낼 때마다 오타 하나', b:'카톡 보낼 때마다 이모티콘 랜덤 발송', t:'서로 카톡 말투에서 제일 귀여운 점은?' },
+    { a:'라면에 늘 스프 반만', b:'짜장면에 늘 단무지 없음', t:'최애 야식 조합 공개하기' },
+  ]},
+  { no:'2라운드', name:'점점 곤란', tag:'슬슬 고르기 싫어지는 구간', go:'덤벼!', qs:[
+    { a:'애인이 매일 밤 코를 드르렁', b:'애인이 매일 밤 이를 뿌드득', t:'서로 자는 모습이나 습관에서 처음 알게 된 거 있어?' },
+    { s:'내 애인이 내 친구한테 해 준다면', a:'깻잎 떼어 주기', b:'새우 껍질 까 주기', t:'우리만의 선, 어디까지 괜찮아?' },
+    { s:'내 애인이 내 친구한테 해 준다면', a:'패딩 지퍼 올려 주기', b:'입가에 묻은 거 닦아 주기', t:'이건 왜 더 별로야? 기준이 뭐야?' },
+    { a:'데이트 사진 전부 눈 감음', b:'데이트 사진 전부 흔들림', t:'우리 사진 중에 제일 좋아하는 한 장은?' },
+    { a:'애인 부모님 앞에서 방귀', b:'애인 친구들 앞에서 대자로 꽈당', t:'제일 창피했던 순간, 이제는 말할 수 있다' },
+    { a:'내가 준 선물을 애인이 중고로 팖', b:'내가 준 선물을 애인이 남한테 선물함', t:'받은 선물 중에 제일 기억에 남는 건?' },
+    { a:'카톡 1이 3시간째 안 사라짐', b:'읽고 3시간째 답이 없음', t:'연락 때문에 서운했던 적 있어? 어떻게 해 주면 좋아?' },
+    { a:'애인이 내 생일을 까먹음', b:'애인이 우리 기념일을 까먹음', t:'꼭 기억해 줬으면 하는 날은?' },
+    { a:'내 흑역사 사진이 애인 프사', b:'내 잠꼬대 녹음이 애인 친구들 단톡방에', t:'서로 흑역사 하나씩 공개하기' },
+    { a:'첫 데이트에 지갑 두고 옴', b:'첫 데이트 내내 이에 고춧가루', t:'우리 첫 데이트, 서로 기억나는 장면은?' },
+    { a:'애인이 지독한 길치', b:'애인이 음치인데 노래방 마니아', t:'상대의 귀여운 단점 하나 말해 주기' },
+    { a:'애인 휴대폰에 내 이름이 「그분」', b:'애인 휴대폰에 내 이름이 본명 석 자', t:'서로 휴대폰에 뭐라고 저장했는지 공개!' },
+    { a:'맛집 와서 애인이 다이어트 선언', b:'맛집 와서 애인이 사진만 30분', t:'같이 꼭 가 보고 싶은 맛집 있어?' },
+    { a:'애인 방이 너무 더러움', b:'애인이 결벽증 수준으로 깔끔', t:'같이 산다면 집안일 뭐 맡을래?' },
+  ]},
+  { no:'3라운드', name:'최종 결전', tag:'진짜 고민되는 것만 남았어요', go:'마지막이다!', qs:[
+    { a:'애인의 큰 거짓말 하나', b:'애인의 작은 거짓말 백 개', t:'우리 사이에 절대 안 되는 것 하나만 정한다면?' },
+    { a:'안 싸우지만 무덤덤한 연애', b:'자주 싸우지만 뜨거운 연애', t:'우리가 다퉜다가 잘 풀렸던 때, 뭐가 좋았어?' },
+    { a:'3년 장거리 연애', b:'매일 보지만 대화 없는 연애', t:'떨어져 있을 때 제일 보고 싶은 순간은?' },
+    { a:'내 기억에서 우리 1년이 사라짐', b:'애인 기억에서 우리 1년이 사라짐', t:'절대 잊고 싶지 않은 우리 기억 하나' },
+    { a:'애인 속마음이 나한테 다 들림', b:'내 속마음이 애인한테 다 들림', t:'지금 이 순간 속마음 하나만 말해 주기' },
+    { a:'애인이 내 친구들이랑 앙숙', b:'애인이 우리 가족이랑 앙숙', t:'서로 소중한 사람들과 어떻게 지내면 좋겠어?' },
+    { a:'애인이 꿈 때문에 해외로 5년', b:'애인 꿈 따라 내가 해외로 5년', t:'요즘 꿈꾸는 것 중에 아직 말 안 한 거 있어?' },
+    { a:'돈 걱정 많은 행복한 연애', b:'돈 걱정 없는 심심한 연애', t:'5년 뒤 우리의 평범한 하루는 어떤 모습이면 좋겠어?' },
+    { a:'내가 훨씬 더 좋아하는 연애', b:'애인이 훨씬 더 좋아하는 연애', t:'상대가 나를 좋아한다고 확 느꼈던 순간은?' },
+    { a:'서운한 걸 절대 말 안 하는 애인', b:'서운한 걸 하나하나 다 말하는 애인', t:'서운할 때 어떻게 말해 주면 제일 잘 들려?' },
+    { a:'힘든 일을 혼자 끙끙 앓는 애인', b:'힘든 일을 매일 나한테만 쏟는 애인', t:'내가 힘들 때 어떻게 해 주면 제일 좋아?' },
+    { a:'애인 휴대폰 비밀번호를 영영 모름', b:'애인이 내 휴대폰을 매일 확인', t:'둘 사이에 공유하고 싶은 것, 지키고 싶은 것은?' },
+    { s:'다시 태어난다면', a:'서로 모르는 사람으로', b:'서로 남매로', t:'다시 태어나도 나 만날 거야? 이유는?' },
+    { a:'평생 같은 동네에서만 데이트', b:'평생 1년에 한 번만 데이트', t:'우리 다음 데이트, 지금 정해 볼까?' },
+  ]},
+];
+const DEFAULT_STEM = '둘 중 하나는 무조건 겪어야 한다면';
+const WHY = [
+  '왜 그게 더 최악이야? 한 사람씩 이유 하나!',
+  '상대가 고른 쪽을 30초 동안 편들어 주기',
+  '어떤 조건이면 마음이 바뀔 것 같아?',
+  '이거 비슷한 일, 진짜 겪어 본 적 있어?',
+];
+const CODE_ABC = 'abcdefghjkmnpqrstuvwxyz23456789';
+const ROOM_PREFIX = 'wbg-';
+const K_USED = 'worst-balance.used', K_NICK = 'worst-balance.nick', K_SESSION = 'worst-balance.session';
+
+/* ───────────────────────── 배경 패턴 타일 ───────────────────────── */
+const TILE = '<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120" viewBox="0 0 120 120">'
+  + '<g fill="#fff" opacity=".22"><path d="M34 8 20 34h12l-8 22 24-30H36l8-18z"/><circle cx="104" cy="104" r="4"/><circle cx="12" cy="74" r="2.5"/>'
+  + '<text x="56" y="112" font-family="Arial Black,Impact,sans-serif" font-weight="900" font-size="22">VS</text></g>'
+  + '<g fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round" opacity=".22"><path d="M78 52l16 16M94 52 78 68"/><circle cx="92" cy="22" r="10"/></g></svg>';
+document.documentElement.style.setProperty('--tile', 'url("data:image/svg+xml,' + encodeURIComponent(TILE) + '")');
+
+/* ───────────────────────── 도우미 ───────────────────────── */
+const store = {
+  get(k, d){ try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch (e) { return d; } },
+  set(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} },
+  del(k){ try { localStorage.removeItem(k); } catch (e) {} },
+};
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
+const shuffle = arr => { for (let i = arr.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [arr[i], arr[j]] = [arr[j], arr[i]]; } return arr; };
+const pickOne = arr => arr[Math.floor(Math.random() * arr.length)];
+const isStr = v => typeof v === 'string';
+const num = v => (typeof v === 'number' && isFinite(v) && v >= 0) ? Math.floor(v) : 0;
+const hashStr = s => { let h = 5381; for (let i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) >>> 0; return h; };
+/* 받침 유무로 조사를 고른다: pp('남친','이','가') → '이' */
+const pp = (word, a, b) => { const w = String(word); const c = w.charCodeAt(w.length - 1); return (c >= 0xAC00 && c <= 0xD7A3 && (c - 0xAC00) % 28) ? a : b; };
+const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+const $app = document.getElementById('app');
+const $flash = document.getElementById('flash');
+const $netbar = document.getElementById('netbar');
+const $toast = document.getElementById('toast');
+
+let screen = 'start';
+let timers = [];
+const later = (fn, ms) => { timers.push(setTimeout(fn, ms)); };
+function cleanup(){
+  timers.forEach(clearTimeout); timers = [];
+  document.querySelectorAll('.count').forEach(el => el.remove());
+}
+const scrollTop = () => window.scrollTo(0, 0);
+let toastT = 0;
+function toast(msg){
+  $toast.textContent = msg; $toast.classList.add('show');
+  clearTimeout(toastT); toastT = setTimeout(() => $toast.classList.remove('show'), 2600);
+}
+
+/* ───────────────────────── 질문 뽑기 ─────────────────────────
+   라운드마다 2~3개. 한 번 나온 질문은 그 라운드 질문을 다 돌 때까지 다시 안 나온다(이 기기 기준). */
+function drawIds(){
+  const used = new Set(store.get(K_USED, []));
+  const out = STAGES.map((st, si) => {
+    const k = 2 + Math.floor(Math.random() * 2);
+    const ids = st.qs.map((_, i) => si + '-' + i);
+    let fresh = shuffle(ids.filter(id => !used.has(id)));
+    if (fresh.length < k) { ids.forEach(id => used.delete(id)); fresh = shuffle(ids.slice()); }
+    const picked = fresh.slice(0, k);
+    picked.forEach(id => used.add(id));
+    return picked;
+  });
+  store.set(K_USED, Array.from(used));
+  return out;
+}
+const encodeIds = rounds => rounds.map(r => r.join('.')).join('|');
+const decodeIds = s => (isStr(s) ? s : '').split('|').map(r => r ? r.split('.') : []);
+function qById(id){
+  const m = /^(\d+)-(\d+)$/.exec(id); if (!m) return null;
+  const st = STAGES[+m[1]]; const q = st && st.qs[+m[2]];
+  return q ? Object.assign({ id, si: +m[1] }, q) : null;
+}
+function makeRounds(idRounds){
+  const r = STAGES.map((_, si) => (idRounds[si] || []).map(qById).filter(q => q && q.si === si));
+  return r;
+}
+const total = rounds => rounds.reduce((n, r) => n + r.length, 0);
+function locate(rounds, k){
+  let n = k;
+  for (let si = 0; si < rounds.length; si++) { if (n < rounds[si].length) return { si, qi: n, q: rounds[si][n] }; n -= rounds[si].length; }
+  return null;
+}
+
+/* ───────────────────────── 공통 화면 조각 ───────────────────────── */
+function topbarHtml(rounds, k, quitLabel){
+  const loc = locate(rounds, k); const st = STAGES[loc ? loc.si : 0];
+  let dots = '', n = 0, first = true;
+  rounds.forEach(r => {
+    if (!r.length) return;
+    if (!first) dots += '<i class="gap"></i>';
+    first = false;
+    r.forEach(() => { dots += '<i class="' + (n < k ? 'done' : n === k ? 'now' : '') + '"></i>'; n++; });
+  });
+  return '<div class="top">'
+    + '<span class="pill">' + st.no + '<span class="rname"> · ' + st.name + '</span></span>'
+    + '<div class="dots" role="img" aria-label="전체 ' + n + '문제 중 ' + (k + 1) + '번째">' + dots + '</div>'
+    + '<button class="pill quit" data-act="quit" data-label="' + quitLabel + '">' + quitLabel + '</button></div>';
+}
+
+function duelHtml(q, pickable, animate){
+  const el = pickable ? 'button' : 'div';
+  const attrs = v => pickable ? ' type="button" data-act="pick" data-v="' + v + '" aria-pressed="false"' : '';
+  const card = v => '<' + el + ' class="card ' + v + (pickable ? ' pickable' : '') + '" id="card-' + v + '"' + attrs(v) + '>'
+    + '<span class="tag">' + v.toUpperCase() + '</span><span>' + esc(q[v]) + '</span><span class="whos" id="whos-' + v + '"></span></' + el + '>';
+  return '<div class="mid"><span class="stem">' + esc(q.s || DEFAULT_STEM) + '</span>'
+    + '<div class="duel' + (animate && !reduce ? ' enter' : '') + '" id="duel">'
+    + card('a') + '<div class="vs" aria-hidden="true">VS</div><div class="sparks" id="sparks" aria-hidden="true"></div>' + card('b')
+    + '</div></div>';
+}
+
+/* 두 카드가 맞부딪히는 순간: 흔들림 + 번쩍 + 불꽃 */
+function impact(){
+  const duel = document.getElementById('duel');
+  if (!duel) return;
+  duel.classList.remove('shake'); void duel.offsetWidth; duel.classList.add('shake');
+  $flash.classList.remove('go'); void $flash.offsetWidth; $flash.classList.add('go');
+  const sp = document.getElementById('sparks');
+  if (sp) sp.innerHTML = Array.from({ length: 14 }, (_, i) =>
+    '<i style="--r:' + Math.round(i * 360 / 14 + Math.random() * 18) + 'deg;--d:' + (60 + Math.round(Math.random() * 80)) + 'px"></i>').join('');
+  try { if (navigator.vibrate) navigator.vibrate(40); } catch (e) {}
+}
+
+function countdown(words, onDone){
+  const ov = document.createElement('div');
+  ov.className = 'count';
+  ov.setAttribute('role', 'status');
+  document.body.appendChild(ov);
+  const step = reduce ? 450 : 620;
+  words.forEach((t, i) => later(() => { ov.innerHTML = '<b class="' + (i === words.length - 1 ? 'go' : '') + '">' + esc(t) + '</b>'; }, i * step));
+  later(() => { ov.remove(); onDone(); }, words.length * step + 350);
+}
+
+function introHtml(si, n, extra){
+  const st = STAGES[si];
+  return '<div class="intro"><div class="round-no">' + st.no + '</div><div class="round-name">' + st.name + '</div>'
+    + '<p class="sub on-color">' + st.tag + '<br>이번 라운드는 ' + n + '문제</p>' + extra + '</div>';
+}
+
+function endHtml(rows, actionsHtml, who){
+  const n = rows.length, same = rows.filter(r => r.same).length, split = rows.filter(r => !r.same);
+  const p = n ? same / n : 0;
+  const verdict = !n ? '아직 고른 게 없어요'
+    : p >= .8 ? '최악 취향까지 닮은 사이 🫶'
+    : p >= .5 ? '통하는데 싸울 거리도 있는 사이 🤝'
+    : p >= .25 ? '갈린 만큼 할 얘기가 많은 사이 ⚡'
+    : '정반대라 매번 새로운 사이 🎢';
+  const side = c => c === 'a' ? 'A' : 'B';
+  const splitPanel = split.length
+    ? '<div class="panel"><h3>⚡ 오늘 밤 더 얘기해 볼 것</h3><ul class="splits">'
+      + split.map(r => '<li><span class="ra">' + esc(r.q.a) + '</span><em>vs</em><span class="rb">' + esc(r.q.b) + '</span>'
+        + (who ? '<span class="t">' + esc(who.me) + ' ' + side(r.mine) + ' · ' + esc(who.pt) + ' ' + side(r.theirs) + '</span>' : '')
+        + '<span class="t">💬 ' + esc(r.q.t) + '</span></li>').join('')
+      + '</ul></div>'
+    : n ? '<div class="panel"><h3>🫶 전부 통했어요</h3><p class="q">그럼 둘이 같이 더 최악인 조합을 하나 만들어 보기!</p></div>' : '';
+  return '<div class="intro end"><span class="pill">결말</span><h1 class="title sm">오늘의<br>최악 정산</h1>'
+    + '<div class="score"><div class="panel"><b>' + same + '</b><small>통했다 🤝</small></div><div class="panel"><b>' + split.length + '</b><small>갈렸다 ⚡</small></div></div>'
+    + '<p class="verdict">' + verdict + '</p>' + splitPanel + actionsHtml + '</div>';
+}
+
+/* ───────────────────────── 시작 화면 ───────────────────────── */
+let transport = null, roomState = 'loading';   // transport = { kind: 'room'|'peer', join(code, role) } · roomState = loading | ready | none
+const normCode = s => String(s || '').toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 5);
+function codeFromHash(){ const m = /^#room-([a-z0-9]{5})$/.exec(location.hash || ''); return m ? m[1] : ''; }
+function setHash(h){ try { if ((location.hash || '') !== (h ? '#' + h : '')) location.hash = h; } catch (e) {} }
+
+function renderStart(msg){
+  cleanup(); screen = 'start'; hideNetbar();
+  const prevCode = document.getElementById('code');
+  const hashCode = codeFromHash();
+  const codeVal = (hashCode && (!prevCode || normCode(prevCode.value) !== hashCode)) ? hashCode.toUpperCase() : (prevCode ? prevCode.value : '');
+  const sess = store.get(K_SESSION, null);
+  const ready = roomState === 'ready';
+  const sameAsSession = !!(sess && isStr(sess.code) && normCode(sess.code) === normCode(codeVal));
+  const invited = !!normCode(codeVal) && !sameAsSession;
+  const note = msg || (roomState === 'loading' ? '온라인 연결을 확인하는 중이에요…'
+    : !ready ? '온라인 연결 도구를 불러오지 못했어요. 인터넷 연결을 확인하고 새로고침해 주세요. 그동안은 폰 하나로 같이 하기만 할 수 있어요.'
+    : invited ? '초대받았어요! 이름을 적고 「들어가기」를 누르세요.'
+    : sess && sess.code ? '하던 방이 있어요. 「이어서 하기」를 누르면 하던 데서 이어져요.'
+    : '방을 만들면 초대코드가 나와요. 상대는 초대 링크를 열거나 코드를 넣으면 들어와요.');
+  const dis = ready ? '' : ' disabled';
+  $app.innerHTML = `
+  <div class="intro">
+    <span class="pill">둘이 하는 밸런스 게임</span>
+    <h1 class="title">뭐가 더<br>최악?</h1>
+    <p class="sub on-color">최악과 최악이 부딪힌다.<br>둘 중 하나는 무조건 겪어야 한다면?</p>
+    <div class="panel lobby">
+      <label class="lbl" for="nick">내 이름</label>
+      <input class="field" id="nick" maxlength="8" placeholder="상대에게 보일 이름" autocomplete="off" value="${esc(store.get(K_NICK, ''))}">
+      ${sess && sess.code && ready ? `<button class="btn" data-act="resume">방 ${esc(String(sess.code).toUpperCase())} 이어서 하기</button>` : ''}
+      <button class="btn${(sess && ready) || invited ? ' plain' : ''}" data-act="host"${dis}>방 만들기</button>
+      <div class="or">또는 초대코드로</div>
+      <div class="joinrow">
+        <input class="field code" id="code" maxlength="5" placeholder="코드 5자리" autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="초대코드" value="${esc(codeVal)}"${dis}>
+        <button class="btn" data-act="join"${dis}>들어가기</button>
+      </div>
+      <p class="note" id="lobby-note" role="status">${esc(note)}</p>
+    </div>
+    <button class="btn plain" data-act="local">폰 하나로 같이 하기</button>
+    <div class="panel rules">
+      <ol>
+        <li>두 카드가 부딪히면 <b>더 최악인 쪽</b>을 골라요. 온라인은 각자 몰래 골라 3, 2, 1에 동시에 공개되고, 폰 하나면 셋에 맞춰 손가락으로 가리켜요</li>
+        <li>통했든 갈렸든, 왜 그게 더 최악인지 이야기해요</li>
+        <li><b>몸풀기 → 점점 곤란 → 최종 결전</b>, 라운드마다 2~3문제가 랜덤으로 나와요</li>
+      </ol>
+    </div>
+  </div>`;
+  scrollTop();
+}
+function setNote(msg){ const n = document.getElementById('lobby-note'); if (n) n.textContent = msg; }
+function lockLobby(on){ document.querySelectorAll('[data-act=host],[data-act=join],[data-act=resume]').forEach(b => { b.disabled = on; }); }
+function nickValue(fallback){
+  const el = document.getElementById('nick');
+  const v = (el ? el.value : store.get(K_NICK, '')).trim().slice(0, 8);
+  return v || fallback;
+}
+
+/* ───────────────────────── 폰 하나로 같이 하기 ───────────────────────── */
+let local = null;
+function startLocal(){
+  local = { rounds: makeRounds(drawIds()), k: 0, results: [], phase: '', introFor: -1 };
+  screen = 'local';
+  renderLocalStep();
+}
+function renderLocalStep(){
+  cleanup();
+  const N = total(local.rounds);
+  if (local.k >= N) return renderLocalEnd();
+  const loc = locate(local.rounds, local.k);
+  if (loc.qi === 0 && local.introFor !== local.k) {
+    local.introFor = local.k; local.phase = 'intro';
+    $app.innerHTML = introHtml(loc.si, local.rounds[loc.si].length, '<button class="btn" data-act="lgo">' + STAGES[loc.si].go + '</button>');
+    return scrollTop();
+  }
+  local.phase = 'duel';
+  $app.innerHTML = topbarHtml(local.rounds, local.k, '그만') + duelHtml(loc.q, false, true)
+    + '<div class="lower' + (reduce ? '' : ' delay') + '" id="lower"><p class="ask">뭐가 더 최악?</p>'
+    + '<button class="btn" data-act="lcount">하나, 둘, 셋!</button>'
+    + '<button class="skip on-color" data-act="lskip">이건 패스</button></div>';
+  scrollTop();
+  if (!reduce) later(impact, 440);
+}
+function showLocalTalk(){
+  local.phase = 'talk';
+  const q = locate(local.rounds, local.k).q;
+  const lower = document.getElementById('lower');
+  if (!lower) return;
+  lower.className = 'lower';
+  lower.innerHTML = '<div class="panel pop-in" role="status"><h3>💬 ' + esc(pickOne(WHY)) + '</h3><p class="q">' + esc(q.t) + '</p></div>'
+    + '<p class="hint on-color">이야기 끝났으면 기록하고 다음으로</p>'
+    + '<div class="row"><button class="btn ok" data-act="lrec" data-v="1">통했다 🤝</button><button class="btn no" data-act="lrec" data-v="0">갈렸다 ⚡</button></div>';
+  lower.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'end' });
+}
+function renderLocalEnd(){
+  cleanup(); local.phase = 'end';
+  $app.innerHTML = endHtml(local.results,
+    '<div class="row"><button class="btn" data-act="local">한 판 더</button><button class="btn plain" data-act="home">처음으로</button></div>', null);
+  scrollTop();
+}
+
+/* ───────────────────────── 온라인 대전 ─────────────────────────
+   방 = room 기능의 이름 붙은 방(초대코드). 서버 없이 각자의 presence 로만 맞춘다.
+   presence: r(host|guest) · n(이름) · d(판 번호) · ids(질문 순서) · at(보고 있는 문제) · p(문제별 선택 a/b/_)
+   - 방장이 판(d, ids)을 정하고, 손님은 그 판을 따라간다.
+   - 지금 문제 = 둘의 at 중 큰 값. 한 명이 「다음」을 누르면 같이 넘어간다.
+   - 둘 다 고르면 양쪽 화면에서 각자 3·2·1 뒤 공개한다. */
+const net = { room: null, code: '', me: null, view: '', introDone: '', dealKey: '', rounds: null, ptCache: null, unsubs: [], discT: 0, offline: false };
+
+function netReset(){
+  net.unsubs.forEach(u => { try { u(); } catch (e) {} });
+  net.unsubs = []; net.view = ''; net.introDone = ''; net.dealKey = ''; net.rounds = null; net.ptCache = null;
+  clearTimeout(net.discT); net.offline = false;
+}
+/* PeerJS 연결(로그인 없이 쓰는 길): 방장은 'wbg26-코드' 이름으로 PeerJS 공용 서버에 등록하고, 손님은 그 이름으로 접속한다.
+   room 기능과 같은 모양(presence · peers · onPeers)으로 감싸서 게임 진행 코드는 그대로 쓴다.
+   PeerJS 기본 설정에 STUN·TURN 서버가 들어 있어 통신사 망에서도 중계로 붙는다. */
+const PEER_PREFIX = 'wbg26-';
+function peerJoin(code, role){
+  return new Promise((resolve, reject) => {
+    const hostId = PEER_PREFIX + code;
+    let me = {}, pt = null, ptAt = 0, lastSeen = 0;
+    let peer = null, conn = null, closed = false, settled = false, idTries = 0, retryT = 0;
+    const fns = new Set();
+    const build = () => {
+      const list = [{ peer: 'me', isMe: true, sameTab: true, presence: Object.freeze(Object.assign({}, me)), updatedAt: Date.now() }];
+      if (pt) list.push({ peer: 'partner', isMe: false, sameTab: false, presence: pt, updatedAt: ptAt });
+      return Object.freeze(list);
+    };
+    let snap = build();
+    const emit = () => { snap = build(); fns.forEach(fn => setTimeout(() => fn({ peers: snap }), 0)); };
+    const send = () => { if (conn && conn.open) { try { conn.send({ t: 'p', p: me }); } catch (e) {} } };
+    const dropPartner = () => { if (pt) { pt = null; emit(); } };
+    function attach(c){
+      if (conn && conn !== c) { try { conn.close(); } catch (e) {} }
+      conn = c;
+      c.on('open', () => { lastSeen = Date.now(); send(); });
+      c.on('data', d => {
+        if (conn !== c || !d || typeof d !== 'object') return;
+        lastSeen = Date.now();
+        if (d.t === 'p' && d.p && typeof d.p === 'object' && !Array.isArray(d.p)) { pt = Object.freeze(Object.assign({}, d.p)); ptAt = Date.now(); emit(); }
+      });
+      c.on('close', () => { if (conn !== c) return; conn = null; dropPartner(); retry(); });
+      c.on('error', () => {});
+    }
+    function retry(){
+      if (closed || role !== 'guest') return;
+      clearTimeout(retryT);
+      retryT = setTimeout(dial, 2500);
+    }
+    function dial(){
+      if (closed || !peer || peer.destroyed) return;
+      if (peer.disconnected) { try { peer.reconnect(); } catch (e) {} return retry(); }
+      if (conn && conn.open) return;
+      const c = peer.connect(hostId, { reliable: true });
+      attach(c);
+      setTimeout(() => { if (conn === c && !c.open) { conn = null; try { c.close(); } catch (e) {} retry(); } }, 7000);
+    }
+    function start(){
+      peer = role === 'host' ? new Peer(hostId) : new Peer();
+      peer.on('open', () => {
+        if (!settled) { settled = true; resolve(api); }
+        if (role === 'guest') dial();
+      });
+      peer.on('connection', c => { if (role === 'host' && !closed) attach(c); else { try { c.close(); } catch (e) {} } });
+      peer.on('disconnected', () => {
+        if (!closed) setTimeout(() => { try { if (peer && !peer.destroyed && peer.disconnected) peer.reconnect(); } catch (e) {} }, 1500);
+      });
+      peer.on('error', err => {
+        const type = err && err.type;
+        if (type === 'peer-unavailable') return retry();            // 방장이 아직 없거나 잠깐 나갔다
+        if (type === 'unavailable-id') {                              // 방장 새로고침 직후 예전 이름이 아직 잡혀 있다
+          try { peer.destroy(); } catch (e) {}
+          if (++idTries > 20) { if (!settled) { settled = true; reject({ code: 'room_busy' }); } return; }
+          setTimeout(() => { if (!closed) start(); }, 3000);
+          return;
+        }
+        if (!settled && ['browser-incompatible', 'invalid-id', 'ssl-unavailable', 'server-error', 'socket-error', 'socket-closed', 'network'].includes(type)) {
+          settled = true; closed = true; clearInterval(beat);
+          try { peer.destroy(); } catch (e) {}
+          reject({ code: 'upstream_error' });
+        }
+      });
+    }
+    // 4초마다 내 상태를 다시 보내고, 13초 동안 소식이 없으면 상대가 나간 것으로 본다
+    const beat = setInterval(() => {
+      if (closed) return;
+      send();
+      if (pt && Date.now() - lastSeen > 13000) { const c = conn; conn = null; dropPartner(); try { if (c) c.close(); } catch (e) {} retry(); }
+    }, 4000);
+    // 폰 화면이 다시 켜지면 바로 다시 잇는다
+    const onVis = () => {
+      if (document.visibilityState !== 'visible' || closed) return;
+      try { if (peer && !peer.destroyed && peer.disconnected) peer.reconnect(); } catch (e) {}
+      if (role === 'guest' && !(conn && conn.open)) dial();
+    };
+    document.addEventListener('visibilitychange', onVis);
+    const api = {
+      presence(patch){ Object.keys(patch).forEach(k => { if (patch[k] === null) delete me[k]; else me[k] = patch[k]; }); snap = build(); send(); return Promise.resolve(); },
+      peers(){ return snap; },
+      onPeers(fn){ fns.add(fn); setTimeout(() => fn({ peers: snap }), 0); return () => fns.delete(fn); },
+      onConnection(fn){ setTimeout(() => fn(true), 0); return () => {}; },
+      leave(){
+        closed = true; clearInterval(beat); clearTimeout(retryT);
+        document.removeEventListener('visibilitychange', onVis);
+        try { if (conn) conn.close(); } catch (e) {}
+        try { if (peer) peer.destroy(); } catch (e) {}
+        return Promise.resolve();
+      },
+    };
+    start();
+    setTimeout(() => {
+      if (settled) return;
+      settled = true; closed = true; clearInterval(beat);
+      try { if (peer) peer.destroy(); } catch (e) {}
+      reject({ code: role === 'host' ? 'room_busy' : 'upstream_error' });
+    }, role === 'host' ? 70000 : 20000);
+  });
+}
+
+function makeCode(){
+  const a = new Uint32Array(5);
+  crypto.getRandomValues(a);
+  return Array.from(a, x => CODE_ABC[x % CODE_ABC.length]).join('');
+}
+function joinError(e){
+  const c = e && e.code;
+  if (c === 'invalid_argument') return '코드를 다시 확인해 주세요.';
+  if (c === 'room_busy') return '이 코드의 방을 지금 열 수 없어요. 잠시 뒤 다시 해 주세요.';
+  if (c === 'limit_reached') return '지금은 방을 더 열 수 없어요. 잠시 뒤 다시 해 주세요.';
+  if (c === 'not_permitted' || c === 'not_granted') return '이 화면에서는 방에 들어갈 수 없어요. claude.ai에 로그인했는지, 이 페이지에 초대됐는지 확인해 주세요.';
+  return '연결이 잠깐 불안정해요. 다시 눌러 주세요.';
+}
+
+async function enterRoom(code, me){
+  if (!transport) return;
+  lockLobby(true); setNote('방에 들어가는 중…');
+  let nr;
+  try { nr = await transport.join(code, me.r); }
+  catch (e) { lockLobby(false); setNote(joinError(e)); return; }
+  netReset();
+  net.room = nr; net.code = code; net.me = me;
+  screen = 'online';
+  net.unsubs.push(nr.onPeers(() => sync(), e => lost(e)));
+  net.unsubs.push(nr.onConnection(onConn, () => {}));
+  setHash('room-' + code);
+  pushMe();
+  sync();
+}
+function pushMe(){
+  if (!net.room || !net.me) return;
+  store.set(K_SESSION, { code: net.code, me: net.me });
+  net.room.presence(Object.assign({}, net.me)).catch(() => {});
+}
+async function leaveRoom(){
+  const r = net.room;
+  netReset(); net.room = null; net.me = null;
+  store.del(K_SESSION); setHash('');
+  if (r) { try { await r.leave(); } catch (e) {} }
+  renderStart();
+}
+function lost(){
+  if (screen !== 'online') return;
+  cleanup(); screen = 'lost'; hideNetbar();
+  $app.innerHTML = '<div class="intro"><span class="pill">연결 끊김</span><div class="panel status-panel">방과의 연결이 끊겼어요. 같은 방으로 다시 들어가면 하던 데서 이어져요.</div>'
+    + '<div class="row" style="width:100%;max-width:440px"><button class="btn" data-act="resume">다시 들어가기</button><button class="btn plain" data-act="leave">처음으로</button></div></div>';
+}
+function onConn(ok){
+  clearTimeout(net.discT);
+  if (ok) { net.offline = false; sync(); return; }
+  net.discT = setTimeout(() => { net.offline = true; sync(); }, 2000);
+}
+
+function nameOf(P){ return P && isStr(P.n) && P.n.trim() ? P.n.trim().slice(0, 8) : (P && P.r === 'host' ? '방장' : '상대'); }
+function partner(){
+  if (!net.room || !net.me) return null;
+  const other = net.me.r === 'host' ? 'guest' : 'host';
+  const list = net.room.peers().filter(p => !p.sameTab && p.presence && p.presence.r === other);
+  if (!list.length) return null;
+  return list.slice().sort((x, y) => y.updatedAt - x.updatedAt)[0];
+}
+const pickAt = (p, i) => { const c = isStr(p) ? p[i] : ''; return c === 'a' || c === 'b' ? c : ''; };
+function setPick(p, i, n, c){
+  const arr = (isStr(p) ? p : '').padEnd(n, '_').slice(0, n).split('');
+  arr[i] = c;
+  return arr.join('');
+}
+function show(key, fn){
+  if (net.view === key) return;
+  cleanup(); net.view = key; fn();
+}
+
+function hideNetbar(){ $netbar.hidden = true; }
+function updateNetbar(pt){
+  let msg = '';
+  if (net.offline) msg = '연결이 불안정해요. 잠깐만 기다려 주세요…';
+  else if (net.me && net.me.d && !pt) {
+    const nm = net.ptCache ? nameOf(net.ptCache) : '상대';
+    msg = '💤 ' + nm + pp(nm, '과', '와') + ' 연결이 끊겼어요 · 코드 ' + net.code.toUpperCase() + '로 다시 들어오면 이어져요';
+  }
+  $netbar.textContent = msg;
+  $netbar.hidden = !msg;
+}
+
+function sync(){
+  if (screen !== 'online' || !net.room || !net.me) return;
+  const me = net.me;
+  const pt = partner();
+  const P = pt ? pt.presence : null;
+  // 손님은 방장이 돌린 판을 그대로 따라간다
+  if (me.r === 'guest' && P && isStr(P.d) && P.d && P.d !== me.d) {
+    me.d = P.d; me.ids = isStr(P.ids) ? P.ids : ''; me.at = 0; me.p = ''; pushMe();
+  }
+  if (P && me.d && P.d === me.d) net.ptCache = P;
+  updateNetbar(pt);
+  if (!me.d) return show('wait:' + (pt ? pt.peer + ':' + nameOf(P) : '-'), () => renderWaiting(pt));
+
+  if (net.dealKey !== me.d) { net.dealKey = me.d; net.rounds = makeRounds(decodeIds(me.ids)); net.introDone = ''; }
+  const rounds = net.rounds, N = total(rounds);
+  // 상대가 잠깐 끊겨도 마지막으로 본 상태로 이어 간다
+  const Pe = (P && P.d === me.d) ? P : (net.ptCache && net.ptCache.d === me.d ? net.ptCache : null);
+  const myAt = Math.min(num(me.at), N), ptAt = Pe ? Math.min(num(Pe.at), N) : 0;
+  const cur = Math.max(myAt, ptAt);
+  if (cur !== num(me.at)) { me.at = cur; pushMe(); }
+
+  if (cur >= N) return show('end:' + me.d + ':' + (Pe ? Pe.p : '') + ':' + me.p, () => renderNetEnd(rounds, Pe));
+  const loc = locate(rounds, cur);
+  const tag = me.d + ':' + cur;
+  // 라운드 첫 문제 앞에는 라운드 소개를 잠깐 띄운다(양쪽이 각자 같은 시간만큼)
+  if (loc.qi === 0 && net.introDone !== tag) {
+    return show('intro:' + tag, () => {
+      $app.innerHTML = introHtml(loc.si, rounds[loc.si].length, '<p class="sub on-color">곧 시작해요…</p>');
+      scrollTop();
+      later(() => { net.introDone = tag; sync(); }, reduce ? 900 : 2000);
+    });
+  }
+  const mine = pickAt(me.p, cur), theirs = Pe ? pickAt(Pe.p, cur) : '';
+  if (mine && theirs) {
+    if (net.view === 'duel:' + tag) {
+      updateDuelStatus(mine, theirs, pt, Pe);
+      net.view = 'count:' + tag;
+      countdown(['3', '2', '1', '공개! 👀'], () => { net.view = 'counted:' + tag; sync(); });
+      return;
+    }
+    if (net.view === 'count:' + tag) return;
+    return show('reveal:' + tag + ':' + mine + theirs, () => renderReveal(rounds, cur, loc, mine, theirs, Pe));
+  }
+  show('duel:' + tag, () => renderNetDuel(rounds, cur, loc));
+  updateDuelStatus(mine, theirs, pt, Pe);
+}
+
+function renderWaiting(pt){
+  const me = net.me, P = pt && pt.presence;
+  const isHost = me.r === 'host';
+  const nm = P ? nameOf(P) : '';
+  const status = isHost
+    ? (pt ? '💞 <b>' + esc(nm) + '</b>' + pp(nm, '이', '가') + ' 들어왔어요! 준비되면 시작하세요' : '<span class="wait-dots">상대를 기다리는 중</span>')
+    : (pt ? '💞 <b>' + esc(nm) + '</b>의 방에 들어왔어요. 방장이 시작하면 바로 시작돼요' : '<span class="wait-dots">방장을 찾는 중</span>');
+  const viaPeer = transport && transport.kind === 'peer';
+  const hostTools = !isHost ? ''
+    : viaPeer ? '<div class="row" style="width:100%;max-width:440px"><button class="btn" data-act="invite">링크 보내기</button><button class="btn plain" data-act="copy">코드 복사</button></div>'
+    : '<button class="btn plain" data-act="copy">코드 복사</button>';
+  $app.innerHTML = '<div class="intro calm"><span class="pill">대기실</span>'
+    + '<div class="codebox"><small>초대코드</small><b>' + esc(net.code.toUpperCase()) + '</b></div>'
+    + hostTools
+    + '<div class="panel status-panel" role="status">' + status + '</div>'
+    + (isHost ? '<button class="btn" data-act="begin"' + (pt ? '' : ' disabled') + '>시작하기</button>' : '')
+    + '<p class="sub on-color small">' + (!isHost
+        ? '한참 기다려도 안 보이면, 방장이 이 코드로 방을 만들어 둔 상태인지 확인해 주세요.'
+        : viaPeer ? '상대는 초대 링크를 열거나, 이 페이지에서 코드를 넣으면 들어와요. 로그인은 필요 없어요.'
+        : '상대는 이 페이지를 열고 「들어가기」 옆 칸에 코드를 넣으면 돼요. 상대도 claude.ai에 로그인하고, 이 페이지에 초대돼 있어야 해요.') + '</p>'
+    + '<button class="skip on-color" data-act="leave">나가기</button></div>';
+  scrollTop();
+}
+
+function renderNetDuel(rounds, cur, loc){
+  $app.innerHTML = topbarHtml(rounds, cur, '나가기') + duelHtml(loc.q, true, true)
+    + '<div class="lower' + (reduce ? '' : ' delay') + '" id="lower"><p class="ask">뭐가 더 최악?</p>'
+    + '<p class="hint on-color">카드를 눌러 몰래 고르세요 🤫 둘 다 고르면 동시에 공개돼요</p>'
+    + '<div class="chips"><span class="chip" id="st-me">나</span><span class="chip" id="st-pt">상대</span></div></div>';
+  document.getElementById('duel').dataset.tag = net.dealKey + ':' + cur;
+  scrollTop();
+  if (!reduce) later(impact, 440);
+}
+function updateDuelStatus(mine, theirs, pt, Pe){
+  ['a', 'b'].forEach(v => {
+    const c = document.getElementById('card-' + v);
+    if (!c) return;
+    c.classList.toggle('mine', mine === v);
+    c.setAttribute('aria-pressed', String(mine === v));
+  });
+  const sm = document.getElementById('st-me'), sp = document.getElementById('st-pt');
+  if (sm) { sm.textContent = mine ? '나 · 골랐어요 ✓' : '나 · 고르는 중'; sm.classList.toggle('done', !!mine); }
+  if (sp) {
+    const nm = pt ? nameOf(pt.presence) : (Pe ? nameOf(Pe) : '상대');
+    sp.textContent = nm + (theirs ? ' · 골랐어요 ✓' : pt ? ' · 고르는 중' : ' · 연결 기다리는 중');
+    sp.classList.toggle('done', !!theirs);
+  }
+}
+function renderReveal(rounds, cur, loc, mine, theirs, Pe){
+  const tag = net.dealKey + ':' + cur;
+  let duel = document.getElementById('duel');
+  if (!duel || duel.dataset.tag !== tag) {
+    $app.innerHTML = topbarHtml(rounds, cur, '나가기') + duelHtml(loc.q, true, false) + '<div class="lower" id="lower"></div>';
+    duel = document.getElementById('duel');
+    duel.dataset.tag = tag;
+    scrollTop();
+  }
+  const nm = nameOf(Pe);
+  ['a', 'b'].forEach(v => {
+    const card = document.getElementById('card-' + v);
+    const who = [];
+    if (mine === v) who.push('<span class="who me">나</span>');
+    if (theirs === v) who.push('<span class="who">' + esc(nm) + '</span>');
+    card.classList.remove('mine');
+    card.classList.toggle('dim', !who.length);
+    card.setAttribute('aria-disabled', 'true');
+    document.getElementById('whos-' + v).innerHTML = who.join('');
+  });
+  const same = mine === theirs;
+  const last = cur + 1 >= total(rounds);
+  const lower = document.getElementById('lower');
+  lower.className = 'lower';
+  lower.innerHTML = '<p class="ask pop-in">' + (same ? '통했다! 🎯' : '갈렸다! ⚡') + '</p>'
+    + '<div class="panel pop-in" role="status"><h3>💬 ' + esc(WHY[hashStr(tag) % WHY.length]) + '</h3><p class="q">' + esc(loc.q.t) + '</p></div>'
+    + '<button class="btn" data-act="netnext">' + (last ? '결과 보기' : '다음 질문 →') + '</button>'
+    + '<p class="hint on-color">둘 중 한 명이 누르면 같이 넘어가요</p>';
+  lower.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'end' });
+}
+function renderNetEnd(rounds, Pe){
+  const N = total(rounds), rows = [];
+  for (let i = 0; i < N; i++) {
+    const a = pickAt(net.me.p, i), b = Pe ? pickAt(Pe.p, i) : '';
+    if (a && b) rows.push({ q: locate(rounds, i).q, same: a === b, mine: a, theirs: b });
+  }
+  const actions = net.me.r === 'host'
+    ? '<div class="row"><button class="btn" data-act="begin">한 판 더</button><button class="btn plain" data-act="leave">나가기</button></div>'
+    : '<p class="hint on-color">방장이 「한 판 더」를 누르면 바로 이어져요</p><button class="btn plain" data-act="leave">나가기</button>';
+  $app.innerHTML = endHtml(rows, actions, { me: '나', pt: nameOf(Pe) });
+  scrollTop();
+}
+
+function beginDeal(){
+  if (screen !== 'online' || !net.me || net.me.r !== 'host') return;
+  net.me.d = makeCode() + makeCode().slice(0, 2);
+  net.me.ids = encodeIds(drawIds());
+  net.me.at = 0; net.me.p = '';
+  pushMe(); sync();
+}
+function copyCode(){
+  const code = net.code.toUpperCase();
+  const fail = () => toast('복사가 안 돼요. 코드를 직접 알려 주세요: ' + code);
+  try { navigator.clipboard.writeText(code).then(() => toast('코드를 복사했어요 · ' + code), fail); } catch (e) { fail(); }
+}
+function shareInvite(){
+  const code = net.code.toUpperCase();
+  const url = location.origin + location.pathname + '#room-' + net.code;
+  const text = '뭐가 더 최악? 같이 하자! 초대코드 ' + code;
+  // 폰에서는 공유 창(카톡 등)을 띄우고, 안 되면 링크를 복사한다
+  if (navigator.share) { navigator.share({ title: '최악 밸런스 게임', text, url }).catch(() => {}); return; }
+  const fail = () => toast('복사가 안 돼요. 코드를 직접 알려 주세요: ' + code);
+  try { navigator.clipboard.writeText(text + '\n' + url).then(() => toast('초대 링크를 복사했어요'), fail); } catch (e) { fail(); }
+}
+function tryJoin(){
+  const el = document.getElementById('code');
+  const code = normCode(el ? el.value : '');
+  if (code.length !== 5) { setNote('초대코드 5자리를 넣어 주세요.'); if (el) el.focus(); return; }
+  enterRoom(code, { r: 'guest', n: nickValue('손님'), d: '', ids: '', at: 0, p: '' });
+}
+function resume(){
+  const s = store.get(K_SESSION, null);
+  if (!s || !s.me || !isStr(s.code) || !transport) return renderStart('이어서 할 방이 없어요.');
+  if (screen === 'lost') { screen = 'start'; renderStart(); }
+  enterRoom(normCode(s.code), s.me);
+}
+
+/* ───────────────────────── 입력 ───────────────────────── */
+$app.addEventListener('click', e => {
+  const el = e.target.closest('[data-act]');
+  if (!el || el.disabled) return;
+  const v = el.dataset.v;
+  switch (el.dataset.act) {
+    case 'local': startLocal(); break;
+    case 'home': renderStart(); break;
+    case 'lgo': renderLocalStep(); break;
+    case 'lcount':
+      if (!local || local.phase !== 'duel') return;
+      local.phase = 'count';
+      countdown(['3', '2', '1', '가리켜! 👉'], showLocalTalk);
+      break;
+    case 'lskip': local.k++; renderLocalStep(); break;
+    case 'lrec':
+      if (!local || local.phase !== 'talk') return;
+      local.results.push({ q: locate(local.rounds, local.k).q, same: v === '1' });
+      local.k++; renderLocalStep();
+      break;
+    case 'quit':
+      if (!el.classList.contains('armed')) {
+        el.classList.add('armed'); el.textContent = '진짜 ' + el.dataset.label + '?';
+        setTimeout(() => { if (el.isConnected) { el.classList.remove('armed'); el.textContent = el.dataset.label; } }, 2500);
+        return;
+      }
+      if (screen === 'local') renderLocalEnd(); else leaveRoom();
+      break;
+    case 'host': enterRoom(makeCode(), { r: 'host', n: nickValue('방장'), d: '', ids: '', at: 0, p: '' }); break;
+    case 'join': tryJoin(); break;
+    case 'resume': resume(); break;
+    case 'copy': copyCode(); break;
+    case 'invite': shareInvite(); break;
+    case 'begin': beginDeal(); break;
+    case 'leave': leaveRoom(); break;
+    case 'pick': {
+      if (screen !== 'online' || !net.view.startsWith('duel:') || (v !== 'a' && v !== 'b')) return;
+      net.me.p = setPick(net.me.p, num(net.me.at), total(net.rounds), v);
+      pushMe(); sync();
+      break;
+    }
+    case 'netnext':
+      if (screen !== 'online' || !net.view.startsWith('reveal:')) return;
+      net.me.at = num(net.me.at) + 1;
+      pushMe(); sync();
+      break;
+  }
+});
+$app.addEventListener('input', e => {
+  if (e.target.id === 'nick') store.set(K_NICK, e.target.value);
+  if (e.target.id === 'code') { const t = e.target.value.replace(/[^0-9a-zA-Z]/g, '').slice(0, 5); if (t !== e.target.value) e.target.value = t; }
+});
+// 게임 페이지를 열어 둔 채 초대 링크를 눌러도 코드가 채워지게 한다
+window.addEventListener('hashchange', () => {
+  const c = codeFromHash();
+  if (screen === 'start' && c && normCode((document.getElementById('code') || {}).value) !== c) renderStart();
+});
+$app.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && e.target.id === 'code') { e.preventDefault(); tryJoin(); }
+});
+
+/* ───────────────────────── 시작 ─────────────────────────
+   claude.ai 안에서 열리면 그쪽 room 기능을, 일반 웹 주소에서 열리면 PeerJS 를 쓴다.
+   둘 다 없으면 폰 하나 모드만 남는다. */
+renderStart();
+(async () => {
+  let api = null;
+  try { if (window.claude && typeof window.claude.use === 'function') api = await window.claude.use('room'); } catch (e) { api = null; }
+  if (api) transport = { kind: 'room', join: code => api.join(ROOM_PREFIX + code) };
+  else if (typeof window.Peer === 'function') transport = { kind: 'peer', join: (code, role) => peerJoin(code, role) };
+  roomState = transport ? 'ready' : 'none';
+  if (screen === 'start') renderStart();
+})();
+})();
+</script>
+</body>
+</html>
